@@ -1,5 +1,10 @@
+import fs from 'node:fs'
+import path from 'node:path'
+
+import * as dateFNS from 'date-fns'
 import express, { Express } from 'express'
 import morgan from 'morgan'
+import cron from 'node-cron'
 import swaggerUi from 'swagger-ui-express'
 
 import ErrorBoundaryController from 'vogapi/controllers/ErrorBoundaryController'
@@ -8,6 +13,8 @@ import Logger from 'vogapi/services/Logger'
 import BuildSwaggerDocs from 'vogapi/utils/BuildSwaggerDocs'
 import RestControler, { RestRoute } from 'vogapi/utils/RestControler'
 import Strings from 'vogapi/utils/Strings'
+
+import { LOGS_PATH } from './utils/constants'
 
 morgan.token('remote-addr', (req) => {
   return (req.headers['cf-connecting-ip'] ?? req.headers['x-forwarded-for'] ?? req.socket.remoteAddress) as string
@@ -35,6 +42,8 @@ class Main {
 
     await new Promise<void>((resolve) => this._express.listen(process.env.PORT, resolve))
     Logger.info(`HTTP server successfully started on port ${process.env.PORT}!`)
+
+    cron.schedule('0 0 * * *', this._logsCleanup)
   }
 
   private static _checkEnvironmentVariables(): boolean {
@@ -64,6 +73,32 @@ class Main {
     }
 
     return routes
+  }
+
+  private static async _logsCleanup(): Promise<void> {
+    const now = new Date()
+    const files = fs.readdirSync(LOGS_PATH)
+
+    for (const fileName of files) {
+      const fileFullPath = path.resolve(LOGS_PATH, fileName)
+      const stats = fs.statSync(fileFullPath)
+
+      if (dateFNS.differenceInDays(stats.mtime, now) > 15) {
+        fs.unlinkSync(fileFullPath)
+      }
+    }
+
+    const yesterday = dateFNS.subDays(now, 1)
+    const yesterdayPrefix = dateFNS.format(yesterday, 'yyyyMMdd')
+    const twurpleFilePath = path.resolve(LOGS_PATH, 'twurple.log')
+    if (fs.existsSync(twurpleFilePath)) {
+      fs.renameSync(twurpleFilePath, path.resolve(LOGS_PATH, `${yesterdayPrefix}-twurple.log`))
+    }
+
+    const vogapiFilePath = path.resolve(LOGS_PATH, 'vogapi.log')
+    if (fs.existsSync(vogapiFilePath)) {
+      fs.renameSync(vogapiFilePath, path.resolve(LOGS_PATH, `${yesterdayPrefix}-vogapi.log`))
+    }
   }
 }
 

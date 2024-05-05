@@ -6,6 +6,7 @@ import log4js from 'log4js'
 import { ParsedQs } from 'qs'
 
 import BadRequest from 'vogapi/errors/BadRequest'
+import CacheService from 'vogapi/services/CacheService'
 import DateUtils from 'vogapi/utils/DateUtils'
 import RestControler, { GET, SwaggerDocs } from 'vogapi/utils/RestControler'
 import Strings from 'vogapi/utils/Strings'
@@ -42,6 +43,56 @@ export default class TwitchController extends RestControler {
 
   /* ============================================================================================ */
 
+  private async _getUserId(userName: string): Promise<string> {
+    try {
+      const cachedUserId = CacheService.getFromCache(`username::${userName}`)
+      if (cachedUserId == null) {
+        throw new Error("User id can't be founded in cache")
+      }
+
+      return cachedUserId
+    } catch (e) {
+      const userInfo = await this._apiClient.users.getUserByName(userName)
+      CacheService.setInCache(`username::${userName}`, userInfo.id)
+
+      return userInfo.id
+    }
+  }
+
+  private async _getGameId(gameName: string): Promise<string> {
+    try {
+      const cachedUserId = CacheService.getFromCache(`gamename::${gameName}`)
+      if (cachedUserId == null) {
+        throw new Error("Game id can't be founded in cache")
+      }
+
+      return cachedUserId
+    } catch (e) {
+      const gameInfo = await this._apiClient.games.getGameByName(gameName)
+      CacheService.setInCache(`gamename::${gameName}`, gameInfo.id)
+
+      return gameInfo.id
+    }
+  }
+
+  private async _getTeamId(teamName: string): Promise<string> {
+    try {
+      const cachedUserId = CacheService.getFromCache(`teamname::${teamName}`)
+      if (cachedUserId == null) {
+        throw new Error("Team id can't be founded in cache")
+      }
+
+      return cachedUserId
+    } catch (e) {
+      const teamInfo = await this._apiClient.teams.getTeamByName(teamName)
+      CacheService.setInCache(`teamname::${teamName}`, teamInfo.id)
+
+      return teamInfo.id
+    }
+  }
+
+  /* ============================================================================================ */
+
   @GET('/channel/emotes/:channelName')
   @SwaggerDocs({ summary: "Returns channel's emotes names.", tags: ['twitch/channel'] })
   public async getChannelEmotes(req: Request<{ channelName: string }, never>, res: Response): Promise<void> {
@@ -50,8 +101,8 @@ export default class TwitchController extends RestControler {
       throw new BadRequest('Missing or invalid channelName')
     }
 
-    const userInfo = await this._apiClient.users.getUserByName(channelName)
-    const channelEmotes = await this._apiClient.chat.getChannelEmotes(userInfo.id)
+    const userId = await this._getUserId(channelName)
+    const channelEmotes = await this._apiClient.chat.getChannelEmotes(userId)
     res.send((channelEmotes ?? []).map((emote) => emote.name).join(' '))
   }
 
@@ -63,8 +114,8 @@ export default class TwitchController extends RestControler {
       throw new BadRequest('Missing or invalid channelName')
     }
 
-    const userInfo = await this._apiClient.users.getUserByName(channelName)
-    const followersCount = await this._apiClient.channels.getChannelFollowerCount(userInfo.id)
+    const userId = await this._getUserId(channelName)
+    const followersCount = await this._apiClient.channels.getChannelFollowerCount(userId)
     res.send(String(followersCount))
   }
 
@@ -76,8 +127,8 @@ export default class TwitchController extends RestControler {
       throw new BadRequest('Missing or invalid channelName')
     }
 
-    const userInfo = await this._apiClient.users.getUserByName(channelName)
-    const { data: clipsInfo } = await this._apiClient.clips.getClipsForBroadcaster(userInfo.id)
+    const userId = await this._getUserId(channelName)
+    const { data: clipsInfo } = await this._apiClient.clips.getClipsForBroadcaster(userId)
     const randomIndex = Math.floor(Math.random() * clipsInfo.length)
     res.send(`https://clips.twitch.tv/${clipsInfo[randomIndex].id}`)
   }
@@ -90,8 +141,8 @@ export default class TwitchController extends RestControler {
       throw new BadRequest('Missing or invalid channelName')
     }
 
-    const userInfo = await this._apiClient.users.getUserByName(channelName)
-    const channelInfo = await this._apiClient.channels.getChannelInfoById(userInfo.id)
+    const userId = await this._getUserId(channelName)
+    const channelInfo = await this._apiClient.channels.getChannelInfoById(userId)
     res.send(channelInfo.gameName)
   }
 
@@ -103,8 +154,8 @@ export default class TwitchController extends RestControler {
       throw new BadRequest('Missing or invalid channelName')
     }
 
-    const userInfo = await this._apiClient.users.getUserByName(channelName)
-    const channelInfo = await this._apiClient.channels.getChannelInfoById(userInfo.id)
+    const userId = await this._getUserId(channelName)
+    const channelInfo = await this._apiClient.channels.getChannelInfoById(userId)
     res.send(channelInfo.title)
   }
 
@@ -142,8 +193,8 @@ export default class TwitchController extends RestControler {
       throw new BadRequest('Missing or invalid gameName')
     }
 
-    const gameInfo = await this._apiClient.games.getGameByName(gameName)
-    res.send(gameInfo.id)
+    const gameId = await this._getGameId(gameName)
+    res.send(gameId)
   }
 
   @GET('/game/boxart/:gameName')
@@ -154,8 +205,8 @@ export default class TwitchController extends RestControler {
       throw new BadRequest('Missing or invalid gameName')
     }
 
-    const gameInfo = await this._apiClient.games.getGameByName(gameName)
-    res.send(`https://static-cdn.jtvnw.net/ttv-boxart/${gameInfo.id}.jpg`)
+    const gameId = await this._getGameId(gameName)
+    res.send(`https://static-cdn.jtvnw.net/ttv-boxart/${gameId}.jpg`)
   }
 
   /* ============================================================================================ */
@@ -180,8 +231,8 @@ export default class TwitchController extends RestControler {
       throw new BadRequest('Missing or invalid teamName')
     }
 
-    const teamInfo = await this._apiClient.teams.getTeamByName(teamName)
-    res.send(teamInfo.id)
+    const teamId = await this._getTeamId(teamName)
+    res.send(teamId)
   }
 
   @GET('/team/members/:teamName')
@@ -242,8 +293,8 @@ export default class TwitchController extends RestControler {
       throw new BadRequest('Missing or invalid userName')
     }
 
-    const userInfo = await this._apiClient.users.getUserByName(userName)
-    res.send(userInfo.id)
+    const userId = await this._getUserId(userName)
+    res.send(userId)
   }
 
   /* ============================================================================================ */
