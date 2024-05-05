@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
+import cors from 'cors'
 import * as dateFNS from 'date-fns'
 import express, { Express } from 'express'
 import morgan from 'morgan'
@@ -33,6 +34,7 @@ class Main {
     this._express.disable('x-powered-by')
     this._express.use(express.json())
     this._express.use(express.urlencoded({ extended: true }))
+    this._express.use(cors({ origin: '*' }))
     this._express.use(morgan('short', { stream: { write: (msg) => Logger.info(msg.replace('\n', '')) } }))
 
     this._registerRoute('/twitch', new TwitchController())
