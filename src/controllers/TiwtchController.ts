@@ -126,7 +126,7 @@ export default class TwitchController extends RestControler {
   }
 
   @GET('/channel/randomclip/:channelName')
-  @SwaggerDocs({ summary: "Returns channel's random clip.", tags: ['twitch/channel'] })
+  @SwaggerDocs({ summary: "Returns channel's random clip url.", tags: ['twitch/channel'] })
   public async getChannelRandomClip(req: Request<{ channelName: string }, never>, res: Response): Promise<void> {
     const { channelName } = req.params
     if (Strings.isInvalidTwitchUserName(channelName)) {

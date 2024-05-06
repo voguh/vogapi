@@ -2,10 +2,9 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import { RequestHandler } from 'express'
-import { JsonObject } from 'swagger-ui-express'
+import { OpenAPIV3 } from 'openapi-types'
 
 import { ROOT_PATH } from 'vogapi/utils/constants'
-import { SwaggerDocs } from 'vogapi/utils/RestControler'
 
 interface ExpressLayerKey {
   name: string
@@ -20,7 +19,7 @@ interface ExpressRoute {
 }
 
 interface ExpressLayer {
-  handle: RequestHandler
+  handle: RequestHandler & { REST_DOCS: OpenAPIV3.OperationObject }
   name: string
   params: any
   path: any
@@ -40,34 +39,33 @@ interface ExpressRouter {
 }
 
 export default class BuildSwaggerDocs {
-  public static build(router: ExpressRouter): JsonObject {
+  public static build(router: ExpressRouter): OpenAPIV3.Document {
     const pkgJson = JSON.parse(fs.readFileSync(path.resolve(ROOT_PATH, 'package.json'), 'utf-8'))
     const paths = router.stack
       .filter((layer) => layer.route != null)
-      .reduce<Record<string, any>>((acc, { route }) => {
+      .reduce<OpenAPIV3.PathsObject>((acc, { route }) => {
         if (!(route.path in acc)) {
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          const docs = route.stack.at(-1).handle.REST_DOCS as SwaggerDocs
-          const method = Object.entries(route.methods).find(([, active]) => active)?.[0]
+          const docs = route.stack.at(-1).handle.REST_DOCS
 
-          acc[route.path] = {
-            [method]: {
-              summary: docs?.summary,
-              description: docs?.description,
-              tags: docs.tags,
-              produces: ['application/json'],
-              parameters: route.path
-                .split('/')
-                .filter((r) => r.startsWith(':'))
-                .map((param) => ({
-                  name: param.substring(1),
-                  in: 'path',
-                  required: true,
-                  schema: { type: 'string' }
-                }))
-            }
+          const rawParameters = route.path.split('/').filter((r) => r.startsWith(':'))
+          const parameters = rawParameters.map<OpenAPIV3.ParameterObject>((param) => ({
+            name: param.substring(1),
+            in: 'path',
+            required: true,
+            schema: { type: 'string' }
+          }))
+
+          const operationData: OpenAPIV3.OperationObject = {
+            summary: docs?.summary,
+            description: docs?.description,
+            tags: docs?.tags,
+            responses: {},
+            parameters: parameters
           }
+
+          const swaggerPath = rawParameters.reduce((acc, crr) => acc.replace(crr, `{${crr.substring(1)}}`), route.path)
+          const method = Object.entries(route.methods).find(([, active]) => active)?.[0]
+          acc[swaggerPath] = { [method]: operationData }
         }
 
         return acc
@@ -84,11 +82,7 @@ export default class BuildSwaggerDocs {
           url: '/license'
         }
       },
-      servers: [
-        {
-          url: process.env.HOST ?? 'http://localhost:8080'
-        }
-      ],
+      servers: [{ url: process.env.HOST ?? 'http://localhost:8080' }],
       paths: paths
     }
   }
