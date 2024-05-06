@@ -1,22 +1,7 @@
 import { NextFunction, Request, RequestHandler, Response } from 'express'
+import { OpenAPIV3 } from 'openapi-types'
 
 type Decorator = (target: any, propertyKey: string, descriptor: PropertyDescriptor) => PropertyDescriptor
-
-/* ============================================================================================== */
-
-export interface SwaggerDocs {
-  summary: string
-  description?: string
-  tags?: string[]
-}
-
-export function SwaggerDocs(docs: SwaggerDocs): Decorator {
-  return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
-    descriptor.value.REST_DOCS = docs
-
-    return descriptor
-  }
-}
 
 /* ============================================================================================== */
 
@@ -26,6 +11,43 @@ export interface RestRoute {
   middlewares: RequestHandler[]
   handler: RequestHandler
 }
+
+interface RouteMethod {
+  (req: Request, res: Response, nextFunction: NextFunction): Promise<void>
+  REST_API: Omit<RestRoute, 'handler'>
+  REST_DOCS?: OpenAPIV3.OperationObject
+}
+
+/* ============================================================================================== */
+
+export function SwaggerDocs(docs: Omit<OpenAPIV3.OperationObject, 'responses'>): Decorator {
+  return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
+    if (descriptor.value.REST_DOCS == null) {
+      descriptor.value.REST_DOCS = {}
+    }
+
+    Object.assign(descriptor.value.REST_DOCS, docs)
+
+    return descriptor
+  }
+}
+
+type ResponseRest = Omit<OpenAPIV3.ReferenceObject | OpenAPIV3.ResponseObject, 'description'>
+export function SwaggerResponse(code: string | number, description: string, rest?: ResponseRest): Decorator {
+  return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
+    if (descriptor.value.REST_DOCS == null) {
+      descriptor.value.REST_DOCS = { responses: {} }
+    } else if (descriptor.value.REST_DOCS.responses == null) {
+      descriptor.value.REST_DOCS.responses = {}
+    }
+
+    descriptor.value.REST_DOCS.responses[code] = { description, ...(rest ?? {}) }
+
+    return descriptor
+  }
+}
+
+/* ============================================================================================== */
 
 function rest(method: RestRoute['method'], path: string, middlewares: RequestHandler[]): Decorator {
   return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
@@ -65,17 +87,9 @@ export function HEAD(path?: string, middlewares?: RequestHandler[]): Decorator {
 
 /* ============================================================================================== */
 
-interface RouteMethod {
-  (req: Request, res: Response, nextFunction: NextFunction): Promise<void>
-  REST_API: Omit<RestRoute, 'handler'>
-  REST_DOCS?: SwaggerDocs
-}
-
 function routeMethodGuard(methodFunction: any): methodFunction is RouteMethod {
   return typeof methodFunction === 'function' && 'REST_API' in methodFunction
 }
-
-/* ============================================================================================== */
 
 export default class RestControler {
   public build(): RestRoute[] {
@@ -87,7 +101,7 @@ export default class RestControler {
       if (routeMethodGuard(methodFunction)) {
         const restApi = methodFunction.REST_API
 
-        const handlerWrapper: RequestHandler & { REST_DOCS: SwaggerDocs } = async (req, res, next) => {
+        const handlerWrapper: RequestHandler & { REST_DOCS: OpenAPIV3.OperationObject } = async (req, res, next) => {
           try {
             await methodFunction.apply(this, [req, res, next])
           } catch (e) {

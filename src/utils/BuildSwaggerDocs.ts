@@ -59,7 +59,12 @@ export default class BuildSwaggerDocs {
             summary: docs?.summary,
             description: docs?.description,
             tags: docs?.tags,
-            responses: {},
+            responses: {
+              '200': { description: 'Ok' },
+              '400': { description: 'Bad Request' },
+              '500': { description: 'Internal Server Error' },
+              ...(docs?.responses ?? {})
+            },
             parameters: parameters
           }
 
