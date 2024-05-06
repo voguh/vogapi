@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { raw, Request, Response } from 'express'
+import { Request, Response } from 'express'
 
 import { PUBLIC_PATH, ROOT_PATH } from 'vogapi/utils/constants'
 import RestControler, { GET, SwaggerDocs } from 'vogapi/utils/RestControler'
