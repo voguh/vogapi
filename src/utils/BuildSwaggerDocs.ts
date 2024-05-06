@@ -45,8 +45,6 @@ export default class BuildSwaggerDocs {
     const paths = router.stack
       .filter((layer) => layer.route != null)
       .reduce<Record<string, any>>((acc, { route }) => {
-        const [tagName, ...rest] = route.path.substring(1).split('/')
-
         if (!(route.path in acc)) {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
@@ -57,9 +55,10 @@ export default class BuildSwaggerDocs {
             [method]: {
               summary: docs?.summary,
               description: docs?.description,
-              tags: docs?.tags != null && docs.tags.length > 0 ? docs.tags : [tagName],
+              tags: docs.tags,
               produces: ['application/json'],
-              parameters: rest
+              parameters: route.path
+                .split('/')
                 .filter((r) => r.startsWith(':'))
                 .map((param) => ({
                   name: param.substring(1),
