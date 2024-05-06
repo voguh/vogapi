@@ -11,13 +11,12 @@ import swaggerUi from 'swagger-ui-express'
 import ErrorBoundaryController from 'vogapi/controllers/ErrorBoundaryController'
 import TwitchController from 'vogapi/controllers/TiwtchController'
 import UtilsController from 'vogapi/controllers/UtilsController'
+import CacheService from 'vogapi/services/CacheService'
 import Logger from 'vogapi/services/Logger'
 import BuildSwaggerDocs from 'vogapi/utils/BuildSwaggerDocs'
 import { LOGS_PATH } from 'vogapi/utils/constants'
 import RestControler, { RestRoute } from 'vogapi/utils/RestControler'
 import Strings from 'vogapi/utils/Strings'
-
-import CacheService from './services/CacheService'
 
 morgan.token('remote-addr', (req) => {
   return (req.headers['cf-connecting-ip'] ?? req.headers['x-forwarded-for'] ?? req.socket.remoteAddress) as string
