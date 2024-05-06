@@ -12,7 +12,9 @@ WORKDIR /vogapi
 
 COPY --from=builder /vogapi/dist /vogapi/lib
 COPY --from=builder /vogapi/public /vogapi/public
+COPY --from=builder /vogapi/LICENSE /vogapi/LICENSE
 COPY --from=builder /vogapi/package.json /vogapi/package.json
+COPY --from=builder /vogapi/privacy-policy.md /vogapi/privacy-policy.md
 
 RUN yarn install --production && mkdir /vogapi/logs
 
