@@ -16,7 +16,7 @@ export default class UtilsController extends RestControler {
   }
 
   @GET('/')
-  @SwaggerDocs({ summary: 'Returns a HTML with privacy policy' })
+  @SwaggerDocs({ summary: 'Returns a HTML with home page' })
   public async getIndex(req: Request, res: Response): Promise<void> {
     const filePath = path.resolve(PUBLIC_PATH, 'index.html')
     const rawContent = this._getFileData(res, filePath)
@@ -24,7 +24,7 @@ export default class UtilsController extends RestControler {
   }
 
   @GET('/privacy-policy')
-  @SwaggerDocs({ summary: 'Returns a HTML with privacy policy' })
+  @SwaggerDocs({ summary: 'Returns a HTML with privacy policy page' })
   public async getPrivacyPolice(req: Request, res: Response): Promise<void> {
     const privacyPolicy = fs.readFileSync(path.resolve(ROOT_PATH, 'privacy-policy.md'), 'utf-8')
 
@@ -35,7 +35,7 @@ export default class UtilsController extends RestControler {
   }
 
   @GET('/license')
-  @SwaggerDocs({ summary: 'Returns a HTML with license information' })
+  @SwaggerDocs({ summary: 'Returns a HTML with license page' })
   public async getLicense(req: Request, res: Response): Promise<void> {
     const pkgJson = JSON.parse(fs.readFileSync(path.resolve(ROOT_PATH, 'package.json'), 'utf-8'))
     const licenseBody = fs.readFileSync(path.resolve(ROOT_PATH, 'LICENSE'), 'utf-8')
