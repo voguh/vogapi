@@ -82,7 +82,7 @@ export default class BuildSwaggerDocs {
         version: pkgJson.version,
         license: {
           name: pkgJson.license,
-          url: pkgJson.repository.url.replace('.git', '/LICENSE')
+          url: '/license'
         }
       },
       servers: [

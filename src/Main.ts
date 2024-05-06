@@ -10,12 +10,12 @@ import swaggerUi from 'swagger-ui-express'
 
 import ErrorBoundaryController from 'vogapi/controllers/ErrorBoundaryController'
 import TwitchController from 'vogapi/controllers/TiwtchController'
+import UtilsController from 'vogapi/controllers/UtilsController'
 import Logger from 'vogapi/services/Logger'
 import BuildSwaggerDocs from 'vogapi/utils/BuildSwaggerDocs'
+import { LOGS_PATH } from 'vogapi/utils/constants'
 import RestControler, { RestRoute } from 'vogapi/utils/RestControler'
 import Strings from 'vogapi/utils/Strings'
-
-import { LOGS_PATH } from './utils/constants'
 
 morgan.token('remote-addr', (req) => {
   return (req.headers['cf-connecting-ip'] ?? req.headers['x-forwarded-for'] ?? req.socket.remoteAddress) as string
@@ -38,6 +38,7 @@ class Main {
     this._express.use(morgan('short', { stream: { write: (msg) => Logger.info(msg.replace('\n', '')) } }))
 
     this._registerRoute('/twitch', new TwitchController())
+    this._registerRoute('/', new UtilsController())
 
     this._express.use('/api-docs', swaggerUi.serve, swaggerUi.setup(BuildSwaggerDocs.build(this._express._router)))
     this._express.use(ErrorBoundaryController.catch)
