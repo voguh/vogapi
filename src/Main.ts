@@ -17,6 +17,8 @@ import { LOGS_PATH } from 'vogapi/utils/constants'
 import RestControler, { RestRoute } from 'vogapi/utils/RestControler'
 import Strings from 'vogapi/utils/Strings'
 
+import CacheService from './services/CacheService'
+
 morgan.token('remote-addr', (req) => {
   return (req.headers['cf-connecting-ip'] ?? req.headers['x-forwarded-for'] ?? req.socket.remoteAddress) as string
 })
@@ -30,6 +32,9 @@ class Main {
       process.exit(1)
     }
 
+    Logger.debug('Connecting to cache database...')
+    await CacheService.init()
+
     this._express = express()
     this._express.disable('x-powered-by')
     this._express.use(express.json())
@@ -37,12 +42,14 @@ class Main {
     this._express.use(cors({ origin: '*' }))
     this._express.use(morgan('short', { stream: { write: (msg) => Logger.info(msg.replace('\n', '')) } }))
 
+    Logger.debug('Registering HTTP routes...')
     this._registerRoute('/twitch', new TwitchController())
     this._registerRoute('/', new UtilsController())
 
     this._express.use('/api-docs', swaggerUi.serve, swaggerUi.setup(BuildSwaggerDocs.build(this._express._router)))
     this._express.use(ErrorBoundaryController.catch)
 
+    Logger.debug('Starting HTTP server...')
     await new Promise<void>((resolve) => this._express.listen(process.env.PORT, resolve))
     Logger.info(`HTTP server successfully started on port ${process.env.PORT}!`)
 
@@ -50,7 +57,7 @@ class Main {
   }
 
   private static _checkEnvironmentVariables(): boolean {
-    const variables = ['PORT', 'TWITCH_CLIENT_ID', 'TWITCH_CLIENT_SECRET']
+    const variables = ['PORT', 'CACHE_DATABASE_URL', 'TWITCH_CLIENT_ID', 'TWITCH_CLIENT_SECRET']
     let missingRequiredVars = false
 
     for (const varName of variables) {

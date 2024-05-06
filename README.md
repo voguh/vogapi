@@ -15,8 +15,8 @@ that gives backbone to the project.
 because I can customize the format and have access to the log's stack trace.
 - [`node-cron`](https://www.npmjs.com/package/node-cron): With these libraries, I implemented a cache cleaning method
 and file separation by day.
-- [`node-cache`](https://www.npmjs.com/package/node-cache): This library enabled the creation of an in-memory caching
-system to prevent excessive calls to the Twitch API, caching team IDs, users, and games.
+- [`redis`](https://www.npmjs.com/package/redis): Used for connecting to KeyDB/Redis to enhance caching to prevent
+excessive calls to the Twitch API, caching team IDs, users, and games.
 - [`swagger-ui-express`](https://www.npmjs.com/package/swagger-ui-express): Using this library and some custom
 decorators, I implemented a simple Swagger interface with OAS-3.1.0.
 
