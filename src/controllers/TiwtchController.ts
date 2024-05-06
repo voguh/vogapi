@@ -45,7 +45,7 @@ export default class TwitchController extends RestControler {
 
   private async _getUserId(userName: string): Promise<string> {
     try {
-      const cachedUserId = CacheService.getFromCache(`username::${userName}`)
+      const cachedUserId = await CacheService.getFromCache(`username::${userName}`)
       if (cachedUserId == null) {
         throw new Error("User id can't be founded in cache")
       }
@@ -53,7 +53,7 @@ export default class TwitchController extends RestControler {
       return cachedUserId
     } catch (e) {
       const userInfo = await this._apiClient.users.getUserByName(userName)
-      CacheService.setInCache(`username::${userName}`, userInfo.id)
+      await CacheService.setInCache(`username::${userName}`, userInfo.id)
 
       return userInfo.id
     }
@@ -61,7 +61,7 @@ export default class TwitchController extends RestControler {
 
   private async _getGameId(gameName: string): Promise<string> {
     try {
-      const cachedUserId = CacheService.getFromCache(`gamename::${gameName}`)
+      const cachedUserId = await CacheService.getFromCache(`gamename::${gameName}`)
       if (cachedUserId == null) {
         throw new Error("Game id can't be founded in cache")
       }
@@ -69,7 +69,7 @@ export default class TwitchController extends RestControler {
       return cachedUserId
     } catch (e) {
       const gameInfo = await this._apiClient.games.getGameByName(gameName)
-      CacheService.setInCache(`gamename::${gameName}`, gameInfo.id)
+      await CacheService.setInCache(`gamename::${gameName}`, gameInfo.id)
 
       return gameInfo.id
     }
@@ -77,7 +77,7 @@ export default class TwitchController extends RestControler {
 
   private async _getTeamId(teamName: string): Promise<string> {
     try {
-      const cachedUserId = CacheService.getFromCache(`teamname::${teamName}`)
+      const cachedUserId = await CacheService.getFromCache(`teamname::${teamName}`)
       if (cachedUserId == null) {
         throw new Error("Team id can't be founded in cache")
       }
@@ -85,7 +85,7 @@ export default class TwitchController extends RestControler {
       return cachedUserId
     } catch (e) {
       const teamInfo = await this._apiClient.teams.getTeamByName(teamName)
-      CacheService.setInCache(`teamname::${teamName}`, teamInfo.id)
+      await CacheService.setInCache(`teamname::${teamName}`, teamInfo.id)
 
       return teamInfo.id
     }
