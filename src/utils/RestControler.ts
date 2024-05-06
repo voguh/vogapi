@@ -20,7 +20,14 @@ export function SwaggerDocs(docs: SwaggerDocs): Decorator {
 
 /* ============================================================================================== */
 
-function rest(method: string, path: string, middlewares: RequestHandler[]): Decorator {
+export interface RestRoute {
+  method: 'get' | 'post' | 'put' | 'patch' | 'delete' | 'options' | 'head'
+  path: string
+  middlewares: RequestHandler[]
+  handler: RequestHandler
+}
+
+function rest(method: RestRoute['method'], path: string, middlewares: RequestHandler[]): Decorator {
   return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
     descriptor.value.REST_API = { method, middlewares, path }
 
@@ -69,13 +76,6 @@ function routeMethodGuard(methodFunction: any): methodFunction is RouteMethod {
 }
 
 /* ============================================================================================== */
-
-export interface RestRoute {
-  method: string
-  path: string
-  middlewares: RequestHandler[]
-  handler: RequestHandler
-}
 
 export default class RestControler {
   public build(): RestRoute[] {
