@@ -91,6 +91,12 @@ export default class TwitchController extends RestControler {
     }
   }
 
+  private _sendRawString(res: Response, content: string): void {
+    res.setHeader('Content-Type', 'text/plain')
+    res.setHeader('Content-Length', content.length)
+    res.send(content)
+  }
+
   /* ============================================================================================ */
 
   @GET('/channel/emotes/:channelName')
@@ -103,7 +109,7 @@ export default class TwitchController extends RestControler {
 
     const userId = await this._getUserId(channelName)
     const channelEmotes = await this._apiClient.chat.getChannelEmotes(userId)
-    res.send((channelEmotes ?? []).map((emote) => emote.name).join(' '))
+    this._sendRawString(res, (channelEmotes ?? []).map((emote) => emote.name).join(' '))
   }
 
   @GET('/channel/followcount/:channelName')
@@ -116,7 +122,7 @@ export default class TwitchController extends RestControler {
 
     const userId = await this._getUserId(channelName)
     const followersCount = await this._apiClient.channels.getChannelFollowerCount(userId)
-    res.send(String(followersCount))
+    this._sendRawString(res, String(followersCount))
   }
 
   @GET('/channel/randomclip/:channelName')
@@ -130,7 +136,7 @@ export default class TwitchController extends RestControler {
     const userId = await this._getUserId(channelName)
     const { data: clipsInfo } = await this._apiClient.clips.getClipsForBroadcaster(userId)
     const randomIndex = Math.floor(Math.random() * clipsInfo.length)
-    res.send(`https://clips.twitch.tv/${clipsInfo[randomIndex].id}`)
+    this._sendRawString(res, `https://clips.twitch.tv/${clipsInfo[randomIndex].id}`)
   }
 
   @GET('/channel/streamgame/:channelName')
@@ -143,7 +149,7 @@ export default class TwitchController extends RestControler {
 
     const userId = await this._getUserId(channelName)
     const channelInfo = await this._apiClient.channels.getChannelInfoById(userId)
-    res.send(channelInfo.gameName)
+    this._sendRawString(res, channelInfo.gameName)
   }
 
   @GET('/channel/streamtitle/:channelName')
@@ -156,7 +162,7 @@ export default class TwitchController extends RestControler {
 
     const userId = await this._getUserId(channelName)
     const channelInfo = await this._apiClient.channels.getChannelInfoById(userId)
-    res.send(channelInfo.title)
+    this._sendRawString(res, channelInfo.title)
   }
 
   @GET('/channel/streamuptime/:channelName')
@@ -168,7 +174,7 @@ export default class TwitchController extends RestControler {
     }
 
     const streamInfo = await this._apiClient.streams.getStreamByUserName(channelName)
-    res.send(DateUtils.betweenString(streamInfo.startDate, new Date()))
+    this._sendRawString(res, DateUtils.betweenString(streamInfo.startDate, new Date()))
   }
 
   @GET('/channel/streamviwerscount/:channelName')
@@ -180,7 +186,7 @@ export default class TwitchController extends RestControler {
     }
 
     const streamInfo = await this._apiClient.streams.getStreamByUserName(channelName)
-    res.send(String(streamInfo.viewers))
+    this._sendRawString(res, String(streamInfo.viewers))
   }
 
   /* ============================================================================================ */
@@ -194,7 +200,7 @@ export default class TwitchController extends RestControler {
     }
 
     const gameId = await this._getGameId(gameName)
-    res.send(gameId)
+    this._sendRawString(res, gameId)
   }
 
   @GET('/game/boxart/:gameName')
@@ -206,7 +212,7 @@ export default class TwitchController extends RestControler {
     }
 
     const gameId = await this._getGameId(gameName)
-    res.send(`https://static-cdn.jtvnw.net/ttv-boxart/${gameId}.jpg`)
+    this._sendRawString(res, `https://static-cdn.jtvnw.net/ttv-boxart/${gameId}.jpg`)
   }
 
   /* ============================================================================================ */
@@ -220,7 +226,7 @@ export default class TwitchController extends RestControler {
     }
 
     const teamInfo = await this._apiClient.teams.getTeamByName(teamName)
-    res.send(teamInfo.logoThumbnailUrl)
+    this._sendRawString(res, teamInfo.logoThumbnailUrl)
   }
 
   @GET('/team/id/:teamName')
@@ -232,7 +238,7 @@ export default class TwitchController extends RestControler {
     }
 
     const teamId = await this._getTeamId(teamName)
-    res.send(teamId)
+    this._sendRawString(res, teamId)
   }
 
   @GET('/team/members/:teamName')
@@ -244,7 +250,7 @@ export default class TwitchController extends RestControler {
     }
 
     const teamInfo = await this._apiClient.teams.getTeamByName(teamName)
-    res.send(teamInfo.userRelations.map((user) => user.name).join(' '))
+    this._sendRawString(res, teamInfo.userRelations.map((user) => user.name).join(' '))
   }
 
   /* ============================================================================================ */
@@ -258,7 +264,7 @@ export default class TwitchController extends RestControler {
     }
 
     const userInfo = await this._apiClient.users.getUserByName(userName)
-    res.send(DateUtils.betweenString(userInfo.creationDate, new Date()))
+    this._sendRawString(res, DateUtils.betweenString(userInfo.creationDate, new Date()))
   }
 
   @GET('/user/avatar/:userName')
@@ -270,7 +276,7 @@ export default class TwitchController extends RestControler {
     }
 
     const userInfo = await this._apiClient.users.getUserByName(userName)
-    res.send(userInfo.profilePictureUrl)
+    this._sendRawString(res, userInfo.profilePictureUrl)
   }
 
   @GET('/user/creation/:userName')
@@ -282,7 +288,7 @@ export default class TwitchController extends RestControler {
     }
 
     const userInfo = await this._apiClient.users.getUserByName(userName)
-    res.send(userInfo.creationDate.toUTCString())
+    this._sendRawString(res, userInfo.creationDate.toUTCString())
   }
 
   @GET('/user/id/:userName')
@@ -294,7 +300,7 @@ export default class TwitchController extends RestControler {
     }
 
     const userId = await this._getUserId(userName)
-    res.send(userId)
+    this._sendRawString(res, userId)
   }
 
   /* ============================================================================================ */
