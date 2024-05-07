@@ -20,7 +20,7 @@ interface RouteMethod {
 
 /* ============================================================================================== */
 
-export function SwaggerDocs(docs: Omit<OpenAPIV3.OperationObject, 'responses'>): Decorator {
+export function SwaggerPath(docs: Omit<OpenAPIV3.OperationObject, 'responses'>): Decorator {
   return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
     if (descriptor.value.REST_DOCS == null) {
       descriptor.value.REST_DOCS = {}

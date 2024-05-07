@@ -5,10 +5,12 @@ import { Request as ExpressRequest, Response } from 'express'
 import log4js from 'log4js'
 import { ParsedQs } from 'qs'
 
-import BadRequest from 'vogapi/errors/BadRequest'
+import BadRequestError from 'vogapi/errors/BadRequestError'
+import NotFoundError from 'vogapi/errors/NotFoundError'
 import CacheService from 'vogapi/services/CacheService'
+import { Errors } from 'vogapi/utils/constants'
 import DateUtils from 'vogapi/utils/DateUtils'
-import RestControler, { GET, SwaggerDocs } from 'vogapi/utils/RestControler'
+import RestControler, { GET, SwaggerPath, SwaggerResponse } from 'vogapi/utils/RestControler'
 import Strings from 'vogapi/utils/Strings'
 
 const twurpleLogger = log4js.getLogger('twurple')
@@ -47,12 +49,16 @@ export default class TwitchController extends RestControler {
     try {
       const cachedUserId = await CacheService.getFromCache(`username::${userName}`)
       if (cachedUserId == null) {
-        throw new Error("User id can't be founded in cache")
+        throw new BadRequestError(Errors.ERR_USER_NOT_FOUND)
       }
 
       return cachedUserId
     } catch (e) {
       const userInfo = await this._apiClient.users.getUserByName(userName)
+      if (userInfo == null) {
+        throw new BadRequestError(Errors.ERR_USER_NOT_FOUND)
+      }
+
       await CacheService.setInCache(`username::${userName}`, userInfo.id)
 
       return userInfo.id
@@ -63,12 +69,16 @@ export default class TwitchController extends RestControler {
     try {
       const cachedUserId = await CacheService.getFromCache(`gamename::${gameName}`)
       if (cachedUserId == null) {
-        throw new Error("Game id can't be founded in cache")
+        throw new BadRequestError(Errors.ERR_GAME_NOT_FOUND)
       }
 
       return cachedUserId
     } catch (e) {
       const gameInfo = await this._apiClient.games.getGameByName(gameName)
+      if (gameInfo == null) {
+        throw new BadRequestError(Errors.ERR_GAME_NOT_FOUND)
+      }
+
       await CacheService.setInCache(`gamename::${gameName}`, gameInfo.id)
 
       return gameInfo.id
@@ -79,12 +89,16 @@ export default class TwitchController extends RestControler {
     try {
       const cachedUserId = await CacheService.getFromCache(`teamname::${teamName}`)
       if (cachedUserId == null) {
-        throw new Error("Team id can't be founded in cache")
+        throw new BadRequestError(Errors.ERR_TEAM_NOT_FOUND)
       }
 
       return cachedUserId
     } catch (e) {
       const teamInfo = await this._apiClient.teams.getTeamByName(teamName)
+      if (teamInfo == null) {
+        throw new BadRequestError(Errors.ERR_TEAM_NOT_FOUND)
+      }
+
       await CacheService.setInCache(`teamname::${teamName}`, teamInfo.id)
 
       return teamInfo.id
@@ -100,11 +114,14 @@ export default class TwitchController extends RestControler {
   /* ============================================================================================ */
 
   @GET('/channel/emotes/:channelName')
-  @SwaggerDocs({ summary: "Returns channel's emotes names.", tags: ['twitch/channel'] })
+  @SwaggerPath({ summary: "Returns channel's emotes names.", tags: ['twitch/channel'] })
+  @SwaggerResponse(200, 'Channel emotes names separated by spaces.')
+  @SwaggerResponse(400, 'Channel name is invalid.')
+  @SwaggerResponse(404, 'Channel not found.')
   public async getChannelEmotes(req: Request<{ channelName: string }, never>, res: Response): Promise<void> {
     const { channelName } = req.params
     if (Strings.isInvalidTwitchUserName(channelName)) {
-      throw new BadRequest('Missing or invalid channelName')
+      throw new BadRequestError(Errors.ERR_MISSING_OR_INVALID_USER_NAME)
     }
 
     const userId = await this._getUserId(channelName)
@@ -113,11 +130,14 @@ export default class TwitchController extends RestControler {
   }
 
   @GET('/channel/followcount/:channelName')
-  @SwaggerDocs({ summary: "Returns channel's followers count.", tags: ['twitch/channel'] })
+  @SwaggerPath({ summary: "Returns channel's followers count.", tags: ['twitch/channel'] })
+  @SwaggerResponse(200, 'Channel followers count.')
+  @SwaggerResponse(400, 'Channel name is invalid.')
+  @SwaggerResponse(404, 'Channel not found.')
   public async getChannelFollowCount(req: Request<{ channelName: string }, never>, res: Response): Promise<void> {
     const { channelName } = req.params
     if (Strings.isInvalidTwitchUserName(channelName)) {
-      throw new BadRequest('Missing or invalid channelName')
+      throw new BadRequestError(Errors.ERR_MISSING_OR_INVALID_USER_NAME)
     }
 
     const userId = await this._getUserId(channelName)
@@ -126,11 +146,14 @@ export default class TwitchController extends RestControler {
   }
 
   @GET('/channel/randomclip/:channelName')
-  @SwaggerDocs({ summary: "Returns channel's random clip url.", tags: ['twitch/channel'] })
+  @SwaggerPath({ summary: "Returns channel's random clip url.", tags: ['twitch/channel'] })
+  @SwaggerResponse(200, 'Channel random clip url.')
+  @SwaggerResponse(400, 'Channel name is invalid.')
+  @SwaggerResponse(404, 'Channel not found.')
   public async getChannelRandomClip(req: Request<{ channelName: string }, never>, res: Response): Promise<void> {
     const { channelName } = req.params
     if (Strings.isInvalidTwitchUserName(channelName)) {
-      throw new BadRequest('Missing or invalid channelName')
+      throw new BadRequestError(Errors.ERR_MISSING_OR_INVALID_USER_NAME)
     }
 
     const userId = await this._getUserId(channelName)
@@ -140,11 +163,14 @@ export default class TwitchController extends RestControler {
   }
 
   @GET('/channel/streamgame/:channelName')
-  @SwaggerDocs({ summary: "Returns channel's last stream game name.", tags: ['twitch/channel'] })
+  @SwaggerPath({ summary: "Returns channel's last stream game name.", tags: ['twitch/channel'] })
+  @SwaggerResponse(200, 'Channel stream category/game.')
+  @SwaggerResponse(400, 'Channel name is invalid.')
+  @SwaggerResponse(404, 'Channel not found.')
   public async getChannelStreamGame(req: Request<{ channelName: string }, never>, res: Response): Promise<void> {
     const { channelName } = req.params
     if (Strings.isInvalidTwitchUserName(channelName)) {
-      throw new BadRequest('Missing or invalid channelName')
+      throw new BadRequestError(Errors.ERR_MISSING_OR_INVALID_USER_NAME)
     }
 
     const userId = await this._getUserId(channelName)
@@ -153,11 +179,14 @@ export default class TwitchController extends RestControler {
   }
 
   @GET('/channel/streamtitle/:channelName')
-  @SwaggerDocs({ summary: "Returns channel's last stream title.", tags: ['twitch/channel'] })
+  @SwaggerPath({ summary: "Returns channel's last stream title.", tags: ['twitch/channel'] })
+  @SwaggerResponse(200, 'Channel stream title.')
+  @SwaggerResponse(400, 'Channel name is invalid.')
+  @SwaggerResponse(404, 'Channel not found.')
   public async getChannelStreamTitle(req: Request<{ channelName: string }, never>, res: Response): Promise<void> {
     const { channelName } = req.params
     if (Strings.isInvalidTwitchUserName(channelName)) {
-      throw new BadRequest('Missing or invalid channelName')
+      throw new BadRequestError(Errors.ERR_MISSING_OR_INVALID_USER_NAME)
     }
 
     const userId = await this._getUserId(channelName)
@@ -166,37 +195,54 @@ export default class TwitchController extends RestControler {
   }
 
   @GET('/channel/streamuptime/:channelName')
-  @SwaggerDocs({ summary: "Returns channel's current stream uptime.", tags: ['twitch/channel'] })
+  @SwaggerPath({ summary: "Returns channel's current stream uptime.", tags: ['twitch/channel'] })
+  @SwaggerResponse(200, 'Channel current stream uptime.')
+  @SwaggerResponse(400, 'Channel name is invalid.')
+  @SwaggerResponse(404, 'Channel not found or stream offline.')
   public async getChannelStreamUptime(req: Request<{ channelName: string }, never>, res: Response): Promise<void> {
     const { channelName } = req.params
     if (Strings.isInvalidTwitchUserName(channelName)) {
-      throw new BadRequest('Missing or invalid channelName')
+      throw new BadRequestError(Errors.ERR_MISSING_OR_INVALID_USER_NAME)
     }
 
     const streamInfo = await this._apiClient.streams.getStreamByUserName(channelName)
+    if (streamInfo == null) {
+      throw new BadRequestError(Errors.ERR_STREAM_OFFLINE)
+    }
+
     this._sendRawString(res, DateUtils.betweenString(streamInfo.startDate, new Date()))
   }
 
   @GET('/channel/streamviwerscount/:channelName')
-  @SwaggerDocs({ summary: "Returns channel's current stream viwers count.", tags: ['twitch/channel'] })
+  @SwaggerPath({ summary: "Returns channel's current stream viwers count.", tags: ['twitch/channel'] })
+  @SwaggerResponse(200, 'Channel current stream viwers count.')
+  @SwaggerResponse(400, 'Channel name is invalid.')
+  @SwaggerResponse(404, 'Channel not found or stream offline.')
   public async getChannelStreamViwersCount(req: Request<{ channelName: string }, never>, res: Response): Promise<void> {
     const { channelName } = req.params
     if (Strings.isInvalidTwitchUserName(channelName)) {
-      throw new BadRequest('Missing or invalid channelName')
+      throw new BadRequestError(Errors.ERR_MISSING_OR_INVALID_USER_NAME)
     }
 
     const streamInfo = await this._apiClient.streams.getStreamByUserName(channelName)
+    if (streamInfo == null) {
+      throw new NotFoundError(Errors.ERR_STREAM_OFFLINE)
+    }
+
     this._sendRawString(res, String(streamInfo.viewers))
   }
 
   /* ============================================================================================ */
 
   @GET('/game/id/:gameName')
-  @SwaggerDocs({ summary: 'Returns game id.', tags: ['twitch/game'] })
+  @SwaggerPath({ summary: 'Returns game id.', tags: ['twitch/game'] })
+  @SwaggerResponse(200, 'Category/Game id.')
+  @SwaggerResponse(400, 'Game name is invalid.')
+  @SwaggerResponse(404, 'Game not found.')
   public async getGameId(req: Request<{ gameName: string }, never>, res: Response): Promise<void> {
     const { gameName } = req.params
     if (Strings.isNullOrEmpty(gameName)) {
-      throw new BadRequest('Missing or invalid gameName')
+      throw new BadRequestError('Missing or invalid gameName')
     }
 
     const gameId = await this._getGameId(gameName)
@@ -204,11 +250,14 @@ export default class TwitchController extends RestControler {
   }
 
   @GET('/game/boxart/:gameName')
-  @SwaggerDocs({ summary: 'Returns game box art url.', tags: ['twitch/game'] })
+  @SwaggerPath({ summary: 'Returns game box art url.', tags: ['twitch/game'] })
+  @SwaggerResponse(200, 'Category/Game boxart url.')
+  @SwaggerResponse(400, 'Game name is invalid.')
+  @SwaggerResponse(404, 'Game not found.')
   public async getGameBoxArt(req: Request<{ gameName: string }, never>, res: Response): Promise<void> {
     const { gameName } = req.params
     if (Strings.isNullOrEmpty(gameName)) {
-      throw new BadRequest('Missing or invalid gameName')
+      throw new BadRequestError('Missing or invalid gameName')
     }
 
     const gameId = await this._getGameId(gameName)
@@ -218,23 +267,33 @@ export default class TwitchController extends RestControler {
   /* ============================================================================================ */
 
   @GET('/team/avatar/:teamName')
-  @SwaggerDocs({ summary: 'Returns team avatar url.', tags: ['twitch/team'] })
+  @SwaggerPath({ summary: 'Returns team avatar url.', tags: ['twitch/team'] })
+  @SwaggerResponse(200, 'Team avatar url.')
+  @SwaggerResponse(400, 'Team name is invalid.')
+  @SwaggerResponse(404, 'Team not found.')
   public async getTeamAvatar(req: Request<{ teamName: string }, never>, res: Response): Promise<void> {
     const { teamName } = req.params
     if (Strings.isInvalidTwitchUserName(teamName)) {
-      throw new BadRequest('Missing or invalid teamName')
+      throw new BadRequestError(Errors.ERR_MISSING_OR_INVALID_TEAM_NAME)
     }
 
     const teamInfo = await this._apiClient.teams.getTeamByName(teamName)
+    if (teamInfo == null) {
+      throw new NotFoundError(Errors.ERR_TEAM_NOT_FOUND)
+    }
+
     this._sendRawString(res, teamInfo.logoThumbnailUrl)
   }
 
   @GET('/team/id/:teamName')
-  @SwaggerDocs({ summary: 'Returns team id.', tags: ['twitch/team'] })
+  @SwaggerPath({ summary: 'Returns team id.', tags: ['twitch/team'] })
+  @SwaggerResponse(200, 'Team id.')
+  @SwaggerResponse(400, 'Team name is invalid.')
+  @SwaggerResponse(404, 'Team not found.')
   public async getTeamId(req: Request<{ teamName: string }, never>, res: Response): Promise<void> {
     const { teamName } = req.params
     if (Strings.isInvalidTwitchUserName(teamName)) {
-      throw new BadRequest('Missing or invalid teamName')
+      throw new BadRequestError(Errors.ERR_MISSING_OR_INVALID_TEAM_NAME)
     }
 
     const teamId = await this._getTeamId(teamName)
@@ -242,66 +301,95 @@ export default class TwitchController extends RestControler {
   }
 
   @GET('/team/members/:teamName')
-  @SwaggerDocs({ summary: 'Returns team members.', tags: ['twitch/team'] })
+  @SwaggerPath({ summary: 'Returns team members.', tags: ['twitch/team'] })
+  @SwaggerResponse(200, 'Team members separeted by spaces.')
+  @SwaggerResponse(400, 'Team name is invalid.')
+  @SwaggerResponse(404, 'Team not found.')
   public async getTeamMembers(req: Request<{ teamName: string }, never>, res: Response): Promise<void> {
     const { teamName } = req.params
     if (Strings.isInvalidTwitchUserName(teamName)) {
-      throw new BadRequest('Missing or invalid teamName')
+      throw new BadRequestError(Errors.ERR_MISSING_OR_INVALID_TEAM_NAME)
     }
 
     const teamInfo = await this._apiClient.teams.getTeamByName(teamName)
+    if (teamInfo == null) {
+      throw new NotFoundError(Errors.ERR_TEAM_NOT_FOUND)
+    }
+
     this._sendRawString(res, teamInfo.userRelations.map((user) => user.name).join(' '))
   }
 
   /* ============================================================================================ */
 
   @GET('/user/accountage/:userName')
-  @SwaggerDocs({ summary: 'Returns user account age.', tags: ['twitch/user'] })
+  @SwaggerPath({ summary: 'Returns user account age.', tags: ['twitch/user'] })
+  @SwaggerResponse(200, 'User account age.')
+  @SwaggerResponse(400, 'User name is invalid.')
+  @SwaggerResponse(404, 'User not found.')
   public async getUserAccountAge(req: Request<{ userName: string }, never>, res: Response): Promise<void> {
     const { userName } = req.params
     if (Strings.isInvalidTwitchUserName(userName)) {
-      throw new BadRequest('Missing or invalid userName')
+      throw new BadRequestError(Errors.ERR_MISSING_OR_INVALID_USER_NAME)
     }
 
     const userInfo = await this._apiClient.users.getUserByName(userName)
+    if (userInfo == null) {
+      throw new NotFoundError(Errors.ERR_USER_NOT_FOUND)
+    }
+
     this._sendRawString(res, DateUtils.betweenString(userInfo.creationDate, new Date()))
   }
 
   @GET('/user/avatar/:userName')
-  @SwaggerDocs({ summary: 'Returns user account avatar url.', tags: ['twitch/user'] })
+  @SwaggerPath({ summary: 'Returns user account avatar url.', tags: ['twitch/user'] })
+  @SwaggerResponse(200, 'User account age.')
+  @SwaggerResponse(400, 'User name is invalid.')
+  @SwaggerResponse(404, 'User not found.')
   public async getUserAvatar(req: Request<{ userName: string }, never>, res: Response): Promise<void> {
     const { userName } = req.params
     if (Strings.isInvalidTwitchUserName(userName)) {
-      throw new BadRequest('Missing or invalid userName')
+      throw new BadRequestError(Errors.ERR_MISSING_OR_INVALID_USER_NAME)
     }
 
     const userInfo = await this._apiClient.users.getUserByName(userName)
+    if (userInfo == null) {
+      throw new NotFoundError(Errors.ERR_USER_NOT_FOUND)
+    }
+
     this._sendRawString(res, userInfo.profilePictureUrl)
   }
 
   @GET('/user/creation/:userName')
-  @SwaggerDocs({ summary: 'Returns user account creation date.', tags: ['twitch/user'] })
+  @SwaggerPath({ summary: 'Returns user account creation date.', tags: ['twitch/user'] })
+  @SwaggerResponse(200, 'User account creation date.')
+  @SwaggerResponse(400, 'User name is invalid.')
+  @SwaggerResponse(404, 'User not found.')
   public async getUserCreationDate(req: Request<{ userName: string }, never>, res: Response): Promise<void> {
     const { userName } = req.params
     if (Strings.isInvalidTwitchUserName(userName)) {
-      throw new BadRequest('Missing or invalid userName')
+      throw new BadRequestError(Errors.ERR_MISSING_OR_INVALID_USER_NAME)
     }
 
     const userInfo = await this._apiClient.users.getUserByName(userName)
+    if (userInfo == null) {
+      throw new NotFoundError(Errors.ERR_USER_NOT_FOUND)
+    }
+
     this._sendRawString(res, userInfo.creationDate.toUTCString())
   }
 
   @GET('/user/id/:userName')
-  @SwaggerDocs({ summary: 'Returns user account id.', tags: ['twitch/user'] })
+  @SwaggerPath({ summary: 'Returns user account id.', tags: ['twitch/user'] })
+  @SwaggerResponse(200, 'User account id.')
+  @SwaggerResponse(400, 'User name is invalid.')
+  @SwaggerResponse(404, 'User not found.')
   public async getUserId(req: Request<{ userName: string }, never>, res: Response): Promise<void> {
     const { userName } = req.params
     if (Strings.isInvalidTwitchUserName(userName)) {
-      throw new BadRequest('Missing or invalid userName')
+      throw new BadRequestError(Errors.ERR_MISSING_OR_INVALID_USER_NAME)
     }
 
     const userId = await this._getUserId(userName)
     this._sendRawString(res, userId)
   }
-
-  /* ============================================================================================ */
 }
