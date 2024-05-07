@@ -46,63 +46,99 @@ export default class TwitchController extends RestControler {
   /* ============================================================================================ */
 
   private async _getUserId(userName: string): Promise<string> {
-    try {
-      const cachedUserId = await CacheService.getFromCache(`username::${userName}`)
-      if (cachedUserId == null) {
-        throw new BadRequestError(Errors.ERR_USER_NOT_FOUND)
-      }
+    const key = `username::${userName}`
 
-      return cachedUserId
-    } catch (e) {
+    const cachedUserId = await CacheService.getFromCache(key)
+    if (cachedUserId == null) {
       const userInfo = await this._apiClient.users.getUserByName(userName)
       if (userInfo == null) {
         throw new BadRequestError(Errors.ERR_USER_NOT_FOUND)
       }
 
-      await CacheService.setInCache(`username::${userName}`, userInfo.id)
-
-      return userInfo.id
+      return CacheService.setInCache(key, userInfo.id)
     }
+
+    return cachedUserId
+  }
+
+  private async _getUserProfilePictureUrl(userName: string): Promise<string> {
+    const key = `userpurl::${userName}`
+
+    const cachedUserProfilePictureUrl = await CacheService.getFromCache(key)
+    if (cachedUserProfilePictureUrl == null) {
+      const userInfo = await this._apiClient.users.getUserByName(userName)
+      if (userInfo == null) {
+        throw new BadRequestError(Errors.ERR_USER_NOT_FOUND)
+      }
+
+      return CacheService.setInCache(key, userInfo.profilePictureUrl, 3600)
+    }
+
+    return cachedUserProfilePictureUrl
+  }
+
+  private async _getUserCreationDate(userName: string): Promise<string> {
+    const key = `userdate::${userName}`
+
+    const cachedUserCreationDate = await CacheService.getFromCache(key)
+    if (cachedUserCreationDate == null) {
+      const userInfo = await this._apiClient.users.getUserByName(userName)
+      if (userInfo == null) {
+        throw new BadRequestError(Errors.ERR_USER_NOT_FOUND)
+      }
+
+      return CacheService.setInCache(key, userInfo.creationDate.toISOString())
+    }
+
+    return cachedUserCreationDate
   }
 
   private async _getGameId(gameName: string): Promise<string> {
-    try {
-      const cachedUserId = await CacheService.getFromCache(`gamename::${gameName}`)
-      if (cachedUserId == null) {
-        throw new BadRequestError(Errors.ERR_GAME_NOT_FOUND)
-      }
+    const key = `gamename::${gameName}`
 
-      return cachedUserId
-    } catch (e) {
+    const cachedUserProfilePicture = await CacheService.getFromCache(key)
+    if (cachedUserProfilePicture == null) {
       const gameInfo = await this._apiClient.games.getGameByName(gameName)
       if (gameInfo == null) {
-        throw new BadRequestError(Errors.ERR_GAME_NOT_FOUND)
+        throw new BadRequestError(Errors.ERR_USER_NOT_FOUND)
       }
 
-      await CacheService.setInCache(`gamename::${gameName}`, gameInfo.id)
-
-      return gameInfo.id
+      return CacheService.setInCache(key, gameInfo.id)
     }
+
+    return cachedUserProfilePicture
   }
 
   private async _getTeamId(teamName: string): Promise<string> {
-    try {
-      const cachedUserId = await CacheService.getFromCache(`teamname::${teamName}`)
-      if (cachedUserId == null) {
-        throw new BadRequestError(Errors.ERR_TEAM_NOT_FOUND)
-      }
+    const key = `teamname::${teamName}`
 
-      return cachedUserId
-    } catch (e) {
+    const cachedTeamId = await CacheService.getFromCache(key)
+    if (cachedTeamId == null) {
       const teamInfo = await this._apiClient.teams.getTeamByName(teamName)
       if (teamInfo == null) {
         throw new BadRequestError(Errors.ERR_TEAM_NOT_FOUND)
       }
 
-      await CacheService.setInCache(`teamname::${teamName}`, teamInfo.id)
-
-      return teamInfo.id
+      return CacheService.setInCache(key, teamInfo.id)
     }
+
+    return cachedTeamId
+  }
+
+  private async _getTeamProfilePictureUrl(teamName: string): Promise<string> {
+    const key = `teamaurl::${teamName}`
+
+    const cachedTeamProfilePictureUrl = await CacheService.getFromCache(key)
+    if (cachedTeamProfilePictureUrl == null) {
+      const teamInfo = await this._apiClient.teams.getTeamByName(teamName)
+      if (teamInfo == null) {
+        throw new BadRequestError(Errors.ERR_TEAM_NOT_FOUND)
+      }
+
+      return CacheService.setInCache(key, teamInfo.logoThumbnailUrl, 3600)
+    }
+
+    return cachedTeamProfilePictureUrl
   }
 
   private _sendRawString(res: Response, content: string): void {
@@ -277,12 +313,8 @@ export default class TwitchController extends RestControler {
       throw new BadRequestError(Errors.ERR_MISSING_OR_INVALID_TEAM_NAME)
     }
 
-    const teamInfo = await this._apiClient.teams.getTeamByName(teamName)
-    if (teamInfo == null) {
-      throw new NotFoundError(Errors.ERR_TEAM_NOT_FOUND)
-    }
-
-    this._sendRawString(res, teamInfo.logoThumbnailUrl)
+    const teamLogoThumbnailUrl = await this._getTeamProfilePictureUrl(teamName)
+    this._sendRawString(res, teamLogoThumbnailUrl)
   }
 
   @GET('/team/id/:teamName')
@@ -332,12 +364,8 @@ export default class TwitchController extends RestControler {
       throw new BadRequestError(Errors.ERR_MISSING_OR_INVALID_USER_NAME)
     }
 
-    const userInfo = await this._apiClient.users.getUserByName(userName)
-    if (userInfo == null) {
-      throw new NotFoundError(Errors.ERR_USER_NOT_FOUND)
-    }
-
-    this._sendRawString(res, DateUtils.betweenString(userInfo.creationDate, new Date()))
+    const userCreationDate = await this._getUserCreationDate(userName)
+    this._sendRawString(res, DateUtils.betweenString(new Date(userCreationDate), new Date()))
   }
 
   @GET('/user/avatar/:userName')
@@ -351,12 +379,8 @@ export default class TwitchController extends RestControler {
       throw new BadRequestError(Errors.ERR_MISSING_OR_INVALID_USER_NAME)
     }
 
-    const userInfo = await this._apiClient.users.getUserByName(userName)
-    if (userInfo == null) {
-      throw new NotFoundError(Errors.ERR_USER_NOT_FOUND)
-    }
-
-    this._sendRawString(res, userInfo.profilePictureUrl)
+    const userProfilePictureUrl = await this._getUserProfilePictureUrl(userName)
+    this._sendRawString(res, userProfilePictureUrl)
   }
 
   @GET('/user/creation/:userName')
@@ -375,7 +399,8 @@ export default class TwitchController extends RestControler {
       throw new NotFoundError(Errors.ERR_USER_NOT_FOUND)
     }
 
-    this._sendRawString(res, userInfo.creationDate.toUTCString())
+    const userCreationDate = await this._getUserCreationDate(userName)
+    this._sendRawString(res, userCreationDate)
   }
 
   @GET('/user/id/:userName')
