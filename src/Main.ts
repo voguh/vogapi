@@ -1,11 +1,8 @@
-import fs from 'node:fs'
-import path from 'node:path'
+import http from 'node:http'
 
 import cors from 'cors'
-import * as dateFNS from 'date-fns'
 import express, { Express } from 'express'
 import morgan from 'morgan'
-import cron from 'node-cron'
 import swaggerUi from 'swagger-ui-express'
 
 import ErrorBoundaryController from 'vogapi/controllers/ErrorBoundaryController'
@@ -14,7 +11,6 @@ import UtilsController from 'vogapi/controllers/UtilsController'
 import CacheService from 'vogapi/services/CacheService'
 import Logger from 'vogapi/services/Logger'
 import BuildSwaggerDocs from 'vogapi/utils/BuildSwaggerDocs'
-import { LOGS_PATH } from 'vogapi/utils/constants'
 import RestControler, { RestRoute } from 'vogapi/utils/RestControler'
 import Strings from 'vogapi/utils/Strings'
 
@@ -24,6 +20,7 @@ morgan.token('remote-addr', (req) => {
 
 class Main {
   private static _express: Express
+  private static _webServer: http.Server
 
   public static async start(_args: string[]): Promise<void> {
     Logger.debug('Checking required environment variables...')
@@ -31,10 +28,14 @@ class Main {
       process.exit(1)
     }
 
+    Logger.debug('Initialize logs cleanup process...')
+    await Logger.init()
+
     Logger.debug('Connecting to cache database...')
     await CacheService.init()
 
     this._express = express()
+    this._webServer = http.createServer(this._express)
     this._express.disable('x-powered-by')
     this._express.use(express.json())
     this._express.use(express.urlencoded({ extended: true }))
@@ -49,10 +50,23 @@ class Main {
     this._express.use(ErrorBoundaryController.catch)
 
     Logger.debug('Starting HTTP server...')
-    await new Promise<void>((resolve) => this._express.listen(process.env.PORT, resolve))
+    await new Promise<void>((resolve) => this._webServer.listen(process.env.PORT, resolve))
     Logger.info(`HTTP server successfully started on port ${process.env.PORT}!`)
 
-    cron.schedule('0 0 * * *', this._logsCleanup)
+    process.on('SIGTERM', async () => {
+      await new Promise<void>((resolve, reject) => {
+        this._webServer.close((err) => {
+          if (err != null) {
+            reject(err)
+          } else {
+            resolve()
+          }
+        })
+      })
+
+      await CacheService.stop()
+      await Logger.stop()
+    })
   }
 
   private static _checkEnvironmentVariables(): boolean {
@@ -82,32 +96,6 @@ class Main {
     }
 
     return routes
-  }
-
-  private static async _logsCleanup(): Promise<void> {
-    const now = new Date()
-    const files = fs.readdirSync(LOGS_PATH)
-
-    for (const fileName of files) {
-      const fileFullPath = path.resolve(LOGS_PATH, fileName)
-      const stats = fs.statSync(fileFullPath)
-
-      if (dateFNS.differenceInDays(stats.mtime, now) > 15) {
-        fs.unlinkSync(fileFullPath)
-      }
-    }
-
-    const yesterday = dateFNS.subDays(now, 1)
-    const yesterdayPrefix = dateFNS.format(yesterday, 'yyyyMMdd')
-    const twurpleFilePath = path.resolve(LOGS_PATH, 'twurple.log')
-    if (fs.existsSync(twurpleFilePath)) {
-      fs.renameSync(twurpleFilePath, path.resolve(LOGS_PATH, `${yesterdayPrefix}-twurple.log`))
-    }
-
-    const vogapiFilePath = path.resolve(LOGS_PATH, 'vogapi.log')
-    if (fs.existsSync(vogapiFilePath)) {
-      fs.renameSync(vogapiFilePath, path.resolve(LOGS_PATH, `${yesterdayPrefix}-vogapi.log`))
-    }
   }
 }
 

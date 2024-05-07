@@ -7,6 +7,10 @@ export default class CacheService {
     await this._cache.connect()
   }
 
+  public static async stop(): Promise<void> {
+    await this._cache.disconnect()
+  }
+
   public static async getFromCache(key: string): Promise<string> {
     return this._cache.get(key)
   }

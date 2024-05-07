@@ -1,6 +1,9 @@
+import fs from 'node:fs'
 import path from 'node:path'
 
+import * as dateFNS from 'date-fns'
 import log4js from 'log4js'
+import cron from 'node-cron'
 
 import { LIB_PATH, LOGS_PATH } from 'vogapi/utils/constants'
 
@@ -37,4 +40,69 @@ log4js.configure({
   }
 })
 
-export default log4js.getLogger('vogapi')
+export default class LoggerService {
+  private static _logger = log4js.getLogger('vogapi')
+  private static _logsCleanupSchedule: cron.ScheduledTask
+
+  public static async init(): Promise<void> {
+    this._logsCleanupSchedule = cron.schedule('0 0 * * *', this._logsCleanup)
+  }
+
+  public static async stop(): Promise<void> {
+    this._logsCleanupSchedule.stop()
+  }
+
+  private static async _logsCleanup(): Promise<void> {
+    const now = new Date()
+    const files = fs.readdirSync(LOGS_PATH)
+
+    for (const fileName of files) {
+      const fileFullPath = path.resolve(LOGS_PATH, fileName)
+      const stats = fs.statSync(fileFullPath)
+
+      if (dateFNS.differenceInDays(stats.mtime, now) > 15) {
+        fs.unlinkSync(fileFullPath)
+      }
+    }
+
+    const yesterday = dateFNS.subDays(now, 1)
+    const yesterdayPrefix = dateFNS.format(yesterday, 'yyyyMMdd')
+    const twurpleFilePath = path.resolve(LOGS_PATH, 'twurple.log')
+    if (fs.existsSync(twurpleFilePath)) {
+      fs.renameSync(twurpleFilePath, path.resolve(LOGS_PATH, `${yesterdayPrefix}-twurple.log`))
+    }
+
+    const vogapiFilePath = path.resolve(LOGS_PATH, 'vogapi.log')
+    if (fs.existsSync(vogapiFilePath)) {
+      fs.renameSync(vogapiFilePath, path.resolve(LOGS_PATH, `${yesterdayPrefix}-vogapi.log`))
+    }
+  }
+
+  public static trace(message: any, ...args: any[]): void {
+    this._logger.trace(message, ...args)
+  }
+
+  public static debug(message: any, ...args: any[]): void {
+    this._logger.debug(message, ...args)
+  }
+
+  public static info(message: any, ...args: any[]): void {
+    this._logger.info(message, ...args)
+  }
+
+  public static warn(message: any, ...args: any[]): void {
+    this._logger.warn(message, ...args)
+  }
+
+  public static error(message: any, ...args: any[]): void {
+    this._logger.error(message, ...args)
+  }
+
+  public static fatal(message: any, ...args: any[]): void {
+    this._logger.fatal(message, ...args)
+  }
+
+  public static mark(message: any, ...args: any[]): void {
+    this._logger.mark(message, ...args)
+  }
+}
