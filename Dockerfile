@@ -4,7 +4,7 @@ WORKDIR /vogapi
 
 COPY . .
 
-RUN yarn install && yarn build
+RUN yarn install --frozen-lockfile && yarn build
 
 FROM node:18.20.0-alpine
 
@@ -14,10 +14,10 @@ COPY --from=builder /vogapi/dist /vogapi/lib
 COPY --from=builder /vogapi/public /vogapi/public
 COPY --from=builder /vogapi/LICENSE /vogapi/LICENSE
 COPY --from=builder /vogapi/package.json /vogapi/package.json
-COPY --from=builder /vogapi/privacy-policy.md /vogapi/privacy-policy.md
+COPY --from=builder /vogapi/yarn.lock /vogapi/yarn.lock
 
-RUN yarn install --production && mkdir /vogapi/logs
+RUN yarn install --frozen-lockfile --production && mkdir /vogapi/logs
 
-VOLUME [ "/vogapi/config", "/vogapi/logs" ]
+VOLUME [ "/vogapi/logs" ]
 
 CMD ["node", "/vogapi/lib/Main.js"]
