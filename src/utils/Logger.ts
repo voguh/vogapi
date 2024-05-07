@@ -80,7 +80,7 @@ export default class Logger {
 
   public trace(message: any): void {
     const stack = new Error().stack
-    this._logger.error(message, stack)
+    this._logger.debug(message, stack)
   }
 
   public debug(message: any): void {
