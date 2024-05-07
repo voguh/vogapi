@@ -11,11 +11,9 @@ export default class CacheService {
     return this._cache.get(key)
   }
 
-  public static async setInCache(key: string, value: string): Promise<void> {
-    await this._cache.set(key, value, { EX: 2592000 })
-  }
+  public static async setInCache(key: string, value: string, ttl?: number): Promise<string> {
+    await this._cache.set(key, value, { EX: ttl ?? 2592000 })
 
-  public static async deleteFromCache(key: string): Promise<void> {
-    await this._cache.del(key)
+    return value
   }
 }
