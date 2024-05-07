@@ -1,27 +1,34 @@
 # VogAPI
 
-### What is VogAPI
+## What is VogAPI
 VogAPI was created based on [DecAPI](https://github.com/Decicus/DecAPI). Developed with the purpose of helping ChatBots/
 Overlays to fetch useful information from the Twitch API in a simple way.
 
 
-### Libraries
+## Libraries
+#### Core
 - [`@twurple/api`](https://www.npmjs.com/package/@twurple/api): I decided to use this library because it already
 provides me with access to Twitch API endpoints with great typing and ease of use; this package is the backbone
 of the project.
 - [`express`](https://www.npmjs.com/package/express): Together with `@twurple/api`, Express is also the main library
 that gives backbone to the project.
-- [`log4js`](https://www.npmjs.com/package/log4js): This is a simple yet powerful logging library. I decided to use it
-because I can customize the format and have access to the log's stack trace.
-- [`node-cron`](https://www.npmjs.com/package/node-cron): With these libraries, I implemented a cache cleaning method
-and file separation by day.
+- [`cors`](https://www.npmjs.com/package/cors): Express CORS middleware
+- [`morgan`](https://www.npmjs.com/package/morgan): Express logging middleware
+
+#### Caching
 - [`redis`](https://www.npmjs.com/package/redis): Used for connecting to KeyDB/Redis to enhance caching to prevent
-excessive calls to the Twitch API, caching team IDs, users, and games.
+excessive calls to the Twitch API, caching some low mutable data.
+
+#### Logging
+- [`winston`](https://www.npmjs.com/package/winston): Simple yet customizable logging library.
+- [`winston-daily-rotate-file`](https://www.npmjs.com/package/winston-daily-rotate-file): Add a daily file transporter to winston.
+
+#### Documentation
 - [`swagger-ui-express`](https://www.npmjs.com/package/swagger-ui-express): Using this library and some custom
-decorators, I implemented a simple Swagger interface with OAS-3.1.0.
+decorators, I implemented a simple Swagger interface with OpenAPI Specification.
 
 
-### Development
+## Development
 
 #### Rest routes
 As a way to simplify route registration, I created two decorators with the purpose of injecting metadata for route

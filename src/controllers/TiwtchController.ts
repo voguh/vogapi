@@ -2,18 +2,18 @@ import { LogLevel, LoggerOptions } from '@d-fischer/logger'
 import { ApiClient } from '@twurple/api'
 import { AppTokenAuthProvider } from '@twurple/auth'
 import { Request as ExpressRequest, Response } from 'express'
-import log4js from 'log4js'
 import { ParsedQs } from 'qs'
 
 import BadRequestError from 'vogapi/errors/BadRequestError'
 import NotFoundError from 'vogapi/errors/NotFoundError'
 import CacheService from 'vogapi/services/CacheService'
+import LoggerService from 'vogapi/services/LoggerService'
 import { Errors } from 'vogapi/utils/constants'
 import DateUtils from 'vogapi/utils/DateUtils'
 import RestControler, { GET, SwaggerPath, SwaggerResponse } from 'vogapi/utils/RestControler'
 import Strings from 'vogapi/utils/Strings'
 
-const twurpleLogger = log4js.getLogger('twurple')
+const twurpleLogger = LoggerService.getLogger('twurple')
 const logger: Partial<LoggerOptions> = {
   custom(level, message) {
     switch (level) {

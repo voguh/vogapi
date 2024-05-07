@@ -9,7 +9,7 @@ import ErrorBoundaryController from 'vogapi/controllers/ErrorBoundaryController'
 import TwitchController from 'vogapi/controllers/TiwtchController'
 import UtilsController from 'vogapi/controllers/UtilsController'
 import CacheService from 'vogapi/services/CacheService'
-import Logger from 'vogapi/services/Logger'
+import LoggerService from 'vogapi/services/LoggerService'
 import BuildSwaggerDocs from 'vogapi/utils/BuildSwaggerDocs'
 import RestControler, { RestRoute } from 'vogapi/utils/RestControler'
 import Strings from 'vogapi/utils/Strings'
@@ -18,20 +18,18 @@ morgan.token('remote-addr', (req) => {
   return (req.headers['cf-connecting-ip'] ?? req.headers['x-forwarded-for'] ?? req.socket.remoteAddress) as string
 })
 
+const _logger = LoggerService.getLogger()
 class Main {
   private static _express: Express
   private static _webServer: http.Server
 
   public static async start(_args: string[]): Promise<void> {
-    Logger.debug('Checking required environment variables...')
+    _logger.debug('Checking required environment variables...')
     if (this._checkEnvironmentVariables()) {
       process.exit(1)
     }
 
-    Logger.debug('Initialize logs cleanup process...')
-    await Logger.init()
-
-    Logger.debug('Connecting to cache database...')
+    _logger.debug('Connecting to cache database...')
     await CacheService.init()
 
     this._express = express()
@@ -40,18 +38,18 @@ class Main {
     this._express.use(express.json())
     this._express.use(express.urlencoded({ extended: true }))
     this._express.use(cors({ origin: '*' }))
-    this._express.use(morgan('short', { stream: { write: (msg) => Logger.info(msg.replace('\n', '')) } }))
+    this._express.use(morgan('short', { stream: { write: (msg) => _logger.info(msg.replace('\n', '')) } }))
 
-    Logger.debug('Registering HTTP routes...')
+    _logger.debug('Registering HTTP routes...')
     this._registerRoute('/twitch', new TwitchController())
     this._registerRoute('/', new UtilsController())
 
     this._express.use('/api-docs', swaggerUi.serve, swaggerUi.setup(BuildSwaggerDocs.build(this._express._router)))
     this._express.use(ErrorBoundaryController.catch)
 
-    Logger.debug('Starting HTTP server...')
+    _logger.debug('Starting HTTP server...')
     await new Promise<void>((resolve) => this._webServer.listen(process.env.PORT, resolve))
-    Logger.info(`HTTP server successfully started on port ${process.env.PORT}!`)
+    _logger.info(`HTTP server successfully started on port ${process.env.PORT}!`)
 
     process.on('SIGTERM', async () => {
       await new Promise<void>((resolve, reject) => {
@@ -65,7 +63,6 @@ class Main {
       })
 
       await CacheService.stop()
-      await Logger.stop()
     })
   }
 
@@ -79,7 +76,7 @@ class Main {
         continue
       }
 
-      Logger.fatal(`Missing environment variable: ${varName}`)
+      _logger.fatal(`Missing environment variable: ${varName}`)
       missingRequiredVars = true
     }
 
@@ -92,7 +89,7 @@ class Main {
     for (const route of routes) {
       const normalizedPath = `/${baseURL}/${route.path}`.replace(/\/+/g, '/')
       this._express[route.method](normalizedPath, ...route.middlewares, route.handler)
-      Logger.info(`Registering route [${route.method.toUpperCase()}] '${normalizedPath}'`)
+      _logger.info(`Registering route [${route.method.toUpperCase()}] '${normalizedPath}'`)
     }
 
     return routes
