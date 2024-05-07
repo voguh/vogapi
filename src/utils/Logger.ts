@@ -11,38 +11,40 @@ class StackTraceFormat implements winston.Logform.Format {
   transform: winston.Logform.TransformFunction = (info, _opts) => {
     const symbols = Object.getOwnPropertySymbols(info)
     const splatKey = symbols.find((symbol) => symbol.toString() === 'Symbol(splat)')
+
+    const returnInfo: winston.Logform.TransformableInfo = {
+      ...info,
+      timestamp: new Date().toISOString(),
+      levelAndCategory: this.colorize(info.level, `${info.category}/${info.level}`)
+    }
+
     if (splatKey != null) {
       const slat = info[splatKey]?.[0]
+
       if (slat != null && typeof slat === 'string' && slat.startsWith('Error')) {
         const [_error, _loggerMethod, caller] = slat.split('\n')
 
-        const matcher = caller.match(/^\s+at Function\.(.*) \((.*)\)$/)
+        const matcher = caller.trim().match(/^at\s(.*)\s\((.*)\)$/)
         if (matcher != null && matcher.length >= 3) {
-          const [_fullString, functionName, fileNameWithRowAndColumn] = matcher
+          const [_fullString, callerOrigin, fileNameWithRowAndColumn] = matcher
           const [fileName, lineNumber, columnNumber] = fileNameWithRowAndColumn.split(':')
+          const functionName = callerOrigin.split('.')?.[1] ?? ''
 
           let partialPath = fileName.replace(`${LIB_PATH}/`, '').replaceAll('/', '.')
           if (partialPath.endsWith('.js') || partialPath.endsWith('.ts')) {
             partialPath = partialPath.slice(0, -3)
           }
 
-          partialPath += `.${functionName}`
-
-          return {
-            ...info,
-            timestamp: new Date().toISOString(),
-            levelAndCategory: this.colorize(info.level, `${info.category}/${info.level}`),
-            functionName,
-            fileName,
-            lineNumber,
-            columnNumber,
-            package: `net.oscproject.vogapi.${partialPath}:${lineNumber}`
-          }
+          returnInfo.functionName = functionName
+          returnInfo.fileName = fileName
+          returnInfo.lineNumber = lineNumber
+          returnInfo.columnNumber = columnNumber
+          returnInfo.package = `net.oscproject.vogapi.${partialPath}.${functionName}:${lineNumber}`
         }
       }
     }
 
-    return info
+    return returnInfo
   }
 }
 
