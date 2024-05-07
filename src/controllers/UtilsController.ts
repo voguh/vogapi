@@ -26,11 +26,8 @@ export default class UtilsController extends RestControler {
   @GET('/privacy-policy')
   @SwaggerPath({ summary: 'Returns a HTML with privacy policy page' })
   public async getPrivacyPolice(req: Request, res: Response): Promise<void> {
-    const privacyPolicy = fs.readFileSync(path.resolve(ROOT_PATH, 'privacy-policy.md'), 'utf-8')
-
     const filePath = path.resolve(PUBLIC_PATH, 'privacy-policy.html')
-    let rawContent = this._getFileData(res, filePath)
-    rawContent = rawContent.replaceAll(`{{PRIVACY_POLICY}}`, privacyPolicy)
+    const rawContent = this._getFileData(res, filePath)
     res.send(rawContent)
   }
 

@@ -18,13 +18,60 @@
     </style>
   </head>
   <body>
-    <main class="container">
+    <main class="container d-grid gap-4">
       <div class="card">
         <div class="card-header">
-          Privacy Policy
+          Automatically collected information
         </div>
-        <div class="card-body">
-          <pre class="m-0 p-0">{{PRIVACY_POLICY}}</pre>
+        <div class="card-body d-grid gap-2">
+          <p class="m-0 p-0">
+            The following information is collected automatically when you use the system:
+          </p>
+          <ul class="list-group">
+            <li class="list-group-item d-flex align-items-center gap-2">
+              <span class="badge bg-primary">15 days</span> Your IP address
+            </li>
+            <li class="list-group-item d-flex align-items-center gap-2">
+              <span class="badge bg-primary">15 days</span> Your browser's user agent
+            </li>
+            <li class="list-group-item d-flex align-items-center gap-2">
+              <span class="badge bg-primary">15 days</span> The page/service accessed
+            </li>
+            <li class="list-group-item d-flex align-items-center gap-2">
+              <span class="badge bg-primary">15 days</span> The date and time of access
+            </li>
+          </ul>
+          <p class="m-0 p-0">
+            These informations are stored for only 15 days. They are stored in raw logs and are not accessed by any other parts of the system.
+          </p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          Twitch cache informations
+        </div>
+        <div class="card-body d-grid gap-2">
+          <p class="m-0 p-0">
+            The following information is stored to prevent excessive calls to the Twitch API:
+          </p>
+          <ul class="list-group">
+            <li class="list-group-item d-flex align-items-center gap-2">
+              <span class="badge bg-primary">30 days</span> Twitch user unique ID, username and creation date
+            </li>
+            <li class="list-group-item d-flex align-items-center gap-2">
+              <span class="badge bg-primary">1 hour</span> Twitch user profile picture url
+            </li>
+            <li class="list-group-item d-flex align-items-center gap-2">
+              <span class="badge bg-primary">30 days</span> Twitch game unique ID
+            </li>
+            <li class="list-group-item d-flex align-items-center gap-2">
+              <span class="badge bg-primary">1 hour</span> Twitch team logo thumbnail url
+            </li>
+            <li class="list-group-item d-flex align-items-center gap-2">
+              <span class="badge bg-primary">30 days</span> Twitch team unique ID
+            </li>
+          </ul>
         </div>
       </div>
     </main>
