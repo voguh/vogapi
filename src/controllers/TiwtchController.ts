@@ -1,46 +1,19 @@
-import { LogLevel, LoggerOptions } from '@d-fischer/logger'
-import { ApiClient } from '@twurple/api'
-import { AppTokenAuthProvider } from '@twurple/auth'
 import { Request as ExpressRequest, Response } from 'express'
 import { ParsedQs } from 'qs'
 
 import BadRequestError from 'vogapi/errors/BadRequestError'
 import NotFoundError from 'vogapi/errors/NotFoundError'
 import CacheService from 'vogapi/services/CacheService'
-import LoggerService from 'vogapi/services/LoggerService'
+import TwurpleApiClient from 'vogapi/services/TwurpleApiClient'
 import { Errors } from 'vogapi/utils/constants'
 import DateUtils from 'vogapi/utils/DateUtils'
 import RestControler, { GET, SwaggerPath, SwaggerResponse } from 'vogapi/utils/RestControler'
 import Strings from 'vogapi/utils/Strings'
 
-const twurpleLogger = LoggerService.getLogger('twurple')
-const logger: Partial<LoggerOptions> = {
-  custom(level, message) {
-    switch (level) {
-      case LogLevel.TRACE:
-        return twurpleLogger.trace(message)
-      case LogLevel.DEBUG:
-        return twurpleLogger.debug(message)
-      case LogLevel.INFO:
-        return twurpleLogger.info(message)
-      case LogLevel.WARNING:
-        return twurpleLogger.warn(message)
-      case LogLevel.ERROR:
-        return twurpleLogger.error(message)
-      case LogLevel.CRITICAL:
-        return twurpleLogger.fatal(message)
-    }
-  }
-}
-
 type Request<Params = Record<string, string>, Query = ParsedQs> = ExpressRequest<Params, any, any, Query>
 export default class TwitchController extends RestControler {
-  private readonly _apiClient: ApiClient
-
-  constructor() {
+  constructor(private readonly _apiClient = new TwurpleApiClient()) {
     super()
-    const authProvider = new AppTokenAuthProvider(process.env.TWITCH_CLIENT_ID, process.env.TWITCH_CLIENT_SECRET)
-    this._apiClient = new ApiClient({ authProvider, logger })
   }
 
   /* ============================================================================================ */
