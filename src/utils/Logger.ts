@@ -28,7 +28,7 @@ class StackTraceFormat implements winston.Logform.Format {
         if (matcher != null && matcher.length >= 3) {
           const [_fullString, callerOrigin, fileNameWithRowAndColumn] = matcher
           const [fileName, lineNumber, columnNumber] = fileNameWithRowAndColumn.split(':')
-          const functionName = callerOrigin.split('.')?.[1] ?? ''
+          const functionName = (callerOrigin.split('.')?.[1] ?? '<unknown>').split(' ')[0]
 
           let partialPath = fileName.replace(`${LIB_PATH}/`, '').replaceAll('/', '.')
           if (partialPath.endsWith('.js') || partialPath.endsWith('.ts')) {
