@@ -4,9 +4,9 @@ import path from 'node:path'
 import { Request, Response } from 'express'
 
 import { PUBLIC_PATH, ROOT_PATH } from 'vogapi/utils/constants'
-import RestControler, { GET, SwaggerPath } from 'vogapi/utils/RestControler'
+import RestController, { GET, SwaggerPath } from 'vogapi/utils/RestController'
 
-export default class UtilsController extends RestControler {
+export default class UtilsController extends RestController {
   private _getFileData(res: Response, filePath: string): string {
     const rawContent = fs.readFileSync(filePath)
     res.setHeader('Content-Type', filePath.endsWith('.html') ? 'text/html' : 'text/plain')

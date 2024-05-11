@@ -11,7 +11,7 @@ import UtilsController from 'vogapi/controllers/UtilsController'
 import CacheService from 'vogapi/services/CacheService'
 import LoggerService from 'vogapi/services/LoggerService'
 import BuildSwaggerDocs from 'vogapi/utils/BuildSwaggerDocs'
-import RestControler, { RestRoute } from 'vogapi/utils/RestControler'
+import RestController, { RestRoute } from 'vogapi/utils/RestController'
 import Strings from 'vogapi/utils/Strings'
 
 morgan.token('remote-addr', (req) => {
@@ -83,7 +83,7 @@ class Main {
     return missingRequiredVars
   }
 
-  private static _registerRoute(baseURL: string, controller: RestControler): RestRoute[] {
+  private static _registerRoute(baseURL: string, controller: RestController): RestRoute[] {
     const routes = controller.build()
 
     for (const route of routes) {

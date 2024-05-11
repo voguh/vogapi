@@ -7,11 +7,11 @@ import CacheService from 'vogapi/services/CacheService'
 import TwurpleApiClient from 'vogapi/services/TwurpleApiClient'
 import { Errors } from 'vogapi/utils/constants'
 import DateUtils from 'vogapi/utils/DateUtils'
-import RestControler, { GET, SwaggerPath, SwaggerResponse } from 'vogapi/utils/RestControler'
+import RestController, { GET, SwaggerPath, SwaggerResponse } from 'vogapi/utils/RestController'
 import Strings from 'vogapi/utils/Strings'
 
 type Request<Params = Record<string, string>, Query = ParsedQs> = ExpressRequest<Params, any, any, Query>
-export default class TwitchController extends RestControler {
+export default class TwitchController extends RestController {
   constructor(private readonly _apiClient = new TwurpleApiClient()) {
     super()
   }
