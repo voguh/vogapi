@@ -69,8 +69,8 @@ export default class TwitchController extends RestControler {
   private async _getGameId(gameName: string): Promise<string> {
     const key = `gamename::${gameName}`
 
-    const cachedUserProfilePicture = await CacheService.getFromCache(key)
-    if (cachedUserProfilePicture == null) {
+    const cachedGameId = await CacheService.getFromCache(key)
+    if (cachedGameId == null) {
       const gameInfo = await this._apiClient.games.getGameByName(gameName)
       if (gameInfo == null) {
         throw new BadRequestError(Errors.ERR_USER_NOT_FOUND)
@@ -79,7 +79,23 @@ export default class TwitchController extends RestControler {
       return CacheService.setInCache(key, gameInfo.id)
     }
 
-    return cachedUserProfilePicture
+    return cachedGameId
+  }
+
+  private async _getGameBoxArt(gameName: string): Promise<string> {
+    const key = `gameboxart::${gameName}`
+
+    const cachedGameBoxArt = await CacheService.getFromCache(key)
+    if (cachedGameBoxArt == null) {
+      const gameInfo = await this._apiClient.games.getGameByName(gameName)
+      if (gameInfo == null) {
+        throw new BadRequestError(Errors.ERR_USER_NOT_FOUND)
+      }
+
+      return CacheService.setInCache(key, gameInfo.boxArtUrl.replace('-{width}x{height}', ''), 3600)
+    }
+
+    return cachedGameBoxArt
   }
 
   private async _getTeamId(teamName: string): Promise<string> {
@@ -269,8 +285,8 @@ export default class TwitchController extends RestControler {
       throw new BadRequestError('Missing or invalid gameName')
     }
 
-    const gameId = await this._getGameId(gameName)
-    this._sendRawString(res, `https://static-cdn.jtvnw.net/ttv-boxart/${gameId}.jpg`)
+    const gameBoxArtUrl = await this._getGameBoxArt(gameName)
+    this._sendRawString(res, gameBoxArtUrl)
   }
 
   /* ============================================================================================ */
