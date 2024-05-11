@@ -6,7 +6,10 @@ import morgan from 'morgan'
 import swaggerUi from 'swagger-ui-express'
 
 import ErrorBoundaryController from 'vogapi/controllers/ErrorBoundaryController'
-import TwitchController from 'vogapi/controllers/TiwtchController'
+import TwitchChannelController from 'vogapi/controllers/twitch/TwitchChannelController'
+import TwitchGameController from 'vogapi/controllers/twitch/TwitchGameController'
+import TwitchTeamController from 'vogapi/controllers/twitch/TwitchTeamController'
+import TwitchUserController from 'vogapi/controllers/twitch/TwitchUserController'
 import UtilsController from 'vogapi/controllers/UtilsController'
 import CacheService from 'vogapi/services/CacheService'
 import LoggerService from 'vogapi/services/LoggerService'
@@ -41,7 +44,14 @@ class Main {
     this._express.use(morgan('short', { stream: { write: (msg) => _logger.info(msg.replace('\n', '')) } }))
 
     _logger.debug('Registering HTTP routes...')
-    this._registerRoute('/twitch', new TwitchController())
+
+    _logger.debug('Registering twitch endpoints...')
+    this._registerRoute('/twitch/channel', new TwitchChannelController())
+    this._registerRoute('/twitch/game', new TwitchGameController())
+    this._registerRoute('/twitch/team', new TwitchTeamController())
+    this._registerRoute('/twitch/user', new TwitchUserController())
+
+    _logger.debug('Registering HTML generic endpoints...')
     this._registerRoute('/', new UtilsController())
 
     this._express.use('/api-docs', swaggerUi.serve, swaggerUi.setup(BuildSwaggerDocs.build(this._express._router)))
