@@ -62,20 +62,20 @@ class Main {
     _logger.debug('Starting HTTP server...')
     await new Promise<void>((resolve) => this._webServer.listen(process.env.PORT, resolve))
     _logger.info(`HTTP server successfully started on port ${process.env.PORT}!`)
+  }
 
-    process.on('SIGTERM', async () => {
-      await new Promise<void>((resolve, reject) => {
-        this._webServer.close((err) => {
-          if (err != null) {
-            reject(err)
-          } else {
-            resolve()
-          }
-        })
+  public static async stop(): Promise<void> {
+    await new Promise<void>((resolve, reject) => {
+      this._webServer.close((err) => {
+        if (err != null) {
+          reject(err)
+        } else {
+          resolve()
+        }
       })
-
-      await CacheService.stop()
     })
+
+    await CacheService.stop()
   }
 
   private static _checkEnvironmentVariables(): boolean {
@@ -109,3 +109,4 @@ class Main {
 }
 
 Main.start(process.argv)
+process.on('SIGTERM', Main.stop)
