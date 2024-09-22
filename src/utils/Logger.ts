@@ -3,7 +3,9 @@ import path from 'node:path'
 
 import winston, { format, transports } from 'winston'
 
-import { LIB_PATH, LOGS_PATH } from 'vogapi/utils/constants'
+import { LOGS_PATH } from 'vogapi/utils/constants'
+
+const loggerCallers = ['Logger.trace', 'Logger.debug', 'Logger.info', 'Logger.warn', 'Logger.error', 'Logger.fatal']
 
 class StackTraceFormat implements winston.Logform.Format {
   colorize = format.colorize().colorize
@@ -21,26 +23,23 @@ class StackTraceFormat implements winston.Logform.Format {
     if (splatKey != null) {
       const slat = info[splatKey]?.[0]
 
-      if (slat != null && typeof slat === 'string' && slat.startsWith('Error')) {
-        const [_error, _loggerMethod, caller] = slat.split('\n')
+      if (typeof slat === 'string' && slat.startsWith('Error')) {
+        let [_error, _loggerRow, caller] = slat.split('\n')
 
-        const matcher = caller.trim().match(/^at\s(.*)\s\((.*)\)$/)
-        if (matcher != null && matcher.length >= 3) {
-          const [_fullString, callerOrigin, fileNameWithRowAndColumn] = matcher
-          const [fileName, lineNumber, columnNumber] = fileNameWithRowAndColumn.split(':')
-          const functionName = (callerOrigin.split('.')?.[1] ?? '<unknown>').split(' ')[0]
-
-          let partialPath = fileName.replace(`${LIB_PATH}/`, '').replaceAll('/', '.')
-          if (partialPath.endsWith('.js') || partialPath.endsWith('.ts')) {
-            partialPath = partialPath.slice(0, -3)
-          }
-
-          returnInfo.functionName = functionName
-          returnInfo.fileName = fileName
-          returnInfo.lineNumber = lineNumber
-          returnInfo.columnNumber = columnNumber
-          returnInfo.package = `net.oscproject.vogapi.${partialPath}.${functionName}:${lineNumber}`
+        if (loggerCallers.every((e) => !_loggerRow.trim().startsWith(`at ${e}`))) {
+          caller = _loggerRow
         }
+
+        let callerPath = (caller.split(' ').at(-1) ?? '').trim()
+        if (callerPath.startsWith('(')) {
+          callerPath = callerPath.slice(1)
+        }
+
+        if (callerPath.endsWith(')')) {
+          callerPath = callerPath.slice(0, -1)
+        }
+
+        returnInfo.package = callerPath
       }
     }
 
@@ -79,32 +78,32 @@ export default class Logger {
   }
 
   public trace(message: any): void {
-    const stack = new Error().stack
+    const stack = message instanceof Error ? message.stack : new Error().stack
     this._logger.debug(message, stack)
   }
 
   public debug(message: any): void {
-    const stack = new Error().stack
+    const stack = message instanceof Error ? message.stack : new Error().stack
     this._logger.debug(message, stack)
   }
 
   public info(message: any): void {
-    const stack = new Error().stack
+    const stack = message instanceof Error ? message.stack : new Error().stack
     this._logger.info(message, stack)
   }
 
   public warn(message: any): void {
-    const stack = new Error().stack
+    const stack = message instanceof Error ? message.stack : new Error().stack
     this._logger.warn(message, stack)
   }
 
   public error(message: any): void {
-    const stack = new Error().stack
+    const stack = message instanceof Error ? message.stack : new Error().stack
     this._logger.error(message, stack)
   }
 
   public fatal(message: any): void {
-    const stack = new Error().stack
+    const stack = message instanceof Error ? message.stack : new Error().stack
     this._logger.error(message, stack)
   }
 }
