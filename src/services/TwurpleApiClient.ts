@@ -1,8 +1,16 @@
-import { LogLevel } from '@d-fischer/logger'
 import { ApiClient, ApiConfig } from '@twurple/api'
 import { AppTokenAuthProvider } from '@twurple/auth'
 
 import LoggerService from 'vogapi/services/LoggerService'
+
+enum LogLevel {
+  CRITICAL = 0,
+  ERROR = 1,
+  WARNING = 2,
+  INFO = 3,
+  DEBUG = 4,
+  TRACE = 7
+}
 
 const _logger = LoggerService.getLogger('twurple')
 export default class TwurpleApiClient extends ApiClient {
