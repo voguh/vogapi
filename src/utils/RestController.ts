@@ -91,7 +91,7 @@ function routeMethodGuard(methodFunction: any): methodFunction is RouteMethod {
   return typeof methodFunction === 'function' && 'REST_API' in methodFunction
 }
 
-export default class RestControler {
+export default class RestController {
   public build(): RestRoute[] {
     const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(this))
     const routes: RestRoute[] = []
