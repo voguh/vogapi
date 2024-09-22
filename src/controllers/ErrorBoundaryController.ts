@@ -13,8 +13,8 @@ export default class ErrorBoundaryController {
       res.status(err.statusCode).send(err.message)
     } else {
       _logger.error(err)
-      res.setHeader('Content-Length', Errors.ERR_UNKNWON_ERROR.length)
-      res.status(500).send(Errors.ERR_UNKNWON_ERROR)
+      res.setHeader('Content-Length', Errors.ERR_UNKNOWN_ERROR.length)
+      res.status(500).send(Errors.ERR_UNKNOWN_ERROR)
     }
   }
 }
