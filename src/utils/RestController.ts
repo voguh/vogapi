@@ -92,6 +92,14 @@ function routeMethodGuard(methodFunction: any): methodFunction is RouteMethod {
 }
 
 export default class RestController {
+  protected _sendRawString(res: Response, content: string): void {
+    res.setHeader('Content-Type', 'text/plain')
+    res.setHeader('Content-Length', content.length)
+    res.send(content)
+  }
+
+  /* ============================================================================================ */
+
   public build(): RestRoute[] {
     const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(this))
     const routes: RestRoute[] = []
