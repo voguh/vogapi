@@ -1,5 +1,4 @@
 import type { Request as ExpressRequest, Response } from 'express'
-import type { ParsedQs } from 'qs'
 
 import TwitchBaseController from 'vogapi/controllers/twitch/TwitchBaseController'
 import BadRequestError from 'vogapi/errors/BadRequestError'
@@ -10,7 +9,7 @@ import DateUtils from 'vogapi/utils/DateUtils'
 import { GET, SwaggerPath, SwaggerResponse } from 'vogapi/utils/RestController'
 import Strings from 'vogapi/utils/Strings'
 
-type Request = ExpressRequest<{ channelName: string }, any, any, ParsedQs>
+type Request = ExpressRequest<{ channelName: string }, any, any, Record<string, any>>
 export default class TwitchChannelController extends TwitchBaseController {
   private async _getUserId(userName: string): Promise<string> {
     const key = `user:${userName}:id`

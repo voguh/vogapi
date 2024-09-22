@@ -1,5 +1,4 @@
 import type { Request as ExpressRequest, Response } from 'express'
-import type { ParsedQs } from 'qs'
 
 import TwitchBaseController from 'vogapi/controllers/twitch/TwitchBaseController'
 import BadRequestError from 'vogapi/errors/BadRequestError'
@@ -9,7 +8,7 @@ import { Errors } from 'vogapi/utils/constants'
 import { GET, SwaggerPath, SwaggerResponse } from 'vogapi/utils/RestController'
 import Strings from 'vogapi/utils/Strings'
 
-type Request = ExpressRequest<{ teamName: string }, any, any, ParsedQs>
+type Request = ExpressRequest<{ teamName: string }, any, any, Record<string, any>>
 export default class TwitchTeamController extends TwitchBaseController {
   private async _getTeamId(teamName: string): Promise<string> {
     const key = `team:${teamName}:id`

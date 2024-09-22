@@ -13,6 +13,7 @@ import TwitchUserController from 'vogapi/controllers/twitch/TwitchUserController
 import UtilsController from 'vogapi/controllers/UtilsController'
 import CacheService from 'vogapi/services/CacheService'
 import LoggerService from 'vogapi/services/LoggerService'
+import TwurpleApiClient from 'vogapi/services/TwurpleApiClient'
 import BuildSwaggerDocs from 'vogapi/utils/BuildSwaggerDocs'
 import RestController, { RestRoute } from 'vogapi/utils/RestController'
 import Strings from 'vogapi/utils/Strings'
@@ -46,10 +47,11 @@ class Main {
     _logger.debug('Registering HTTP routes...')
 
     _logger.debug('Registering twitch endpoints...')
-    this._registerRoute('/twitch/channel', new TwitchChannelController())
-    this._registerRoute('/twitch/game', new TwitchGameController())
-    this._registerRoute('/twitch/team', new TwitchTeamController())
-    this._registerRoute('/twitch/user', new TwitchUserController())
+    const twurpleAPIClient = new TwurpleApiClient()
+    this._registerRoute('/twitch/channel', new TwitchChannelController(twurpleAPIClient))
+    this._registerRoute('/twitch/game', new TwitchGameController(twurpleAPIClient))
+    this._registerRoute('/twitch/team', new TwitchTeamController(twurpleAPIClient))
+    this._registerRoute('/twitch/user', new TwitchUserController(twurpleAPIClient))
 
     _logger.debug('Registering HTML generic endpoints...')
     this._registerRoute('/', new UtilsController())
